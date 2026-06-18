@@ -20,7 +20,7 @@ self.addEventListener('push', (event) => {
   const options = {
     body: data.body || '',
     icon: data.icon || '/icon-192.png',
-    badge: data.badge || '/icon-192.png',
+    badge: data.badge || '/badge-72.png',
     tag: data.tag || 'shahnbid-job',
     renotify: true,
     data: { url: data.url || '/carrier/map' },
