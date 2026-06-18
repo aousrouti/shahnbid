@@ -1,3 +1,5 @@
+'use client';
+
 import { notFound } from 'next/navigation';
 import StatusBadge from '@/components/jobs/StatusBadge';
 import BidCard from '@/components/bids/BidCard';

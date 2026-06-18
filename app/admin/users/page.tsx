@@ -1,3 +1,5 @@
+'use client';
+
 import PageHeader from '@/components/shared/PageHeader';
 import { mockAllCarriers } from '@/lib/mock-data/users';
 import { formatDate } from '@/lib/utils';
