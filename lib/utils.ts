@@ -1,7 +1,20 @@
 // lib/utils.ts
 
+import type { ClientType } from './types';
+
 export function cn(...classes: (string | undefined | null | false | 0)[]): string {
   return classes.filter(Boolean).join(' ');
+}
+
+/** Business clients show their company name; individuals (B2C) show their full name. */
+export function clientDisplayName(client: {
+  clientType: ClientType;
+  companyName?: string | null;
+  fullName: string;
+}): string {
+  return client.clientType === 'BUSINESS' && client.companyName
+    ? client.companyName
+    : client.fullName;
 }
 
 export function formatMAD(amount: number): string {

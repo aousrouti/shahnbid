@@ -1,6 +1,7 @@
 // lib/types.ts
 
 export type UserRole           = 'CLIENT' | 'CARRIER' | 'ADMIN';
+export type ClientType         = 'INDIVIDUAL' | 'BUSINESS';   // B2C vs B2B client
 export type JobStatus          = 'DRAFT' | 'PUBLISHED' | 'ACCEPTED' | 'PICKED_UP' | 'IN_TRANSIT' | 'DELIVERED' | 'COMPLETED' | 'CANCELLED';
 export type BidStatus          = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN';
 export type CargoType          = 'GENERAL' | 'REFRIGERATED' | 'HAZMAT' | 'FRAGILE' | 'OVERSIZED' | 'LIVESTOCK';
@@ -39,7 +40,22 @@ export interface JobDetail extends JobSummary {
   photoUrls: string[];
   bids: BidWithCarrier[];
   acceptedBidId?: string;
-  client: { companyName: string; phone: string };
+  client: { clientType: ClientType; companyName?: string; fullName: string; phone: string };
+}
+
+export interface ClientProfile {
+  id: string;
+  profileId: string;
+  email: string;
+  fullName: string;
+  phone: string;
+  role: 'CLIENT';
+  clientType: ClientType;
+  companyName?: string;   // BUSINESS only
+  ice?: string;           // BUSINESS only — Moroccan company tax ID (15 digits)
+  address?: string;       // BUSINESS only
+  city: string;
+  createdAt: string;
 }
 
 export interface BidWithCarrier {
@@ -103,13 +119,15 @@ export interface PostReturnTripPayload {
 }
 
 export interface RegisterClientPayload {
+  clientType: ClientType;
   email: string;
   password: string;
   fullName: string;
   phone: string;
-  companyName: string;
-  address: string;
   city: string;
+  companyName?: string;   // BUSINESS only
+  ice?: string;           // BUSINESS only
+  address?: string;       // BUSINESS only
 }
 
 export interface RegisterCarrierPayload {

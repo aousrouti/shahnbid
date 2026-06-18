@@ -1,17 +1,40 @@
 // lib/mock-data/users.ts
 
-export const mockClientProfile = {
+import type { ClientProfile } from '@/lib/types';
+
+// B2B client — a company shipping commercial cargo.
+export const mockClientProfile: ClientProfile = {
   id:             'client-001',
   profileId:      'profile-001',
   email:          'contact@imexmaroc.ma',
   fullName:       'Karim Benali',
   phone:          '+212 6 12 34 56 78',
-  role:           'CLIENT' as const,
+  role:           'CLIENT',
+  clientType:     'BUSINESS',
   companyName:    'Imex Maroc SARL',
+  ice:            '001234567000089',
   address:        'Zone Industrielle Aïn Sebaâ, Lot 42',
   city:           'Casablanca',
   createdAt:      '2026-01-15T09:00:00Z',
 };
+
+// B2C client — an individual shipping personal goods.
+export const mockIndividualClientProfile: ClientProfile = {
+  id:             'client-002',
+  profileId:      'profile-010',
+  email:          'salma.bennani@gmail.com',
+  fullName:       'Salma Bennani',
+  phone:          '+212 6 70 88 99 00',
+  role:           'CLIENT',
+  clientType:     'INDIVIDUAL',
+  city:           'Rabat',
+  createdAt:      '2026-05-02T16:00:00Z',
+};
+
+export const mockAllClients: ClientProfile[] = [
+  mockClientProfile,
+  mockIndividualClientProfile,
+];
 
 export const mockApprovedCarrier = {
   id:              'carrier-001',

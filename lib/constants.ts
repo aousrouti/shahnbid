@@ -28,6 +28,11 @@ export const VEHICLE_TYPES = [
 
 export const COMMISSION_RATE = 0.10;
 
+export const CLIENT_TYPE_LABELS: Record<string, string> = {
+  INDIVIDUAL: 'Particulier',
+  BUSINESS:   'Entreprise',
+};
+
 export const JOB_STATUS_LABELS: Record<string, string> = {
   DRAFT:      'Brouillon',
   PUBLISHED:  'Ouvert aux offres',

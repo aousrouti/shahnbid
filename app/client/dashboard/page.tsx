@@ -4,6 +4,7 @@ import JobCard from '@/components/jobs/JobCard';
 import PageHeader from '@/components/shared/PageHeader';
 import { mockJobs } from '@/lib/mock-data/jobs';
 import { mockClientProfile } from '@/lib/mock-data/users';
+import { CLIENT_TYPE_LABELS } from '@/lib/constants';
 import { Briefcase, Clock, CheckCircle, DollarSign, Plus } from 'lucide-react';
 
 export default function ClientDashboardPage() {
@@ -16,7 +17,7 @@ export default function ClientDashboardPage() {
     <div className="space-y-6">
       <PageHeader
         title={`Bonjour, ${mockClientProfile.fullName} 👋`}
-        subtitle={mockClientProfile.companyName}
+        subtitle={mockClientProfile.clientType === 'BUSINESS' ? mockClientProfile.companyName : CLIENT_TYPE_LABELS[mockClientProfile.clientType]}
         action={
           <Link href="/client/jobs/new" className="flex items-center gap-2 px-4 py-2 bg-brand-primary text-white text-sm font-semibold rounded-input hover:bg-brand-mid transition-colors">
             <Plus size={16} /> Nouvelle expédition

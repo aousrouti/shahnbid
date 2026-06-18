@@ -97,7 +97,7 @@ export const mockJobDetails: Record<string, JobDetail> = {
     notes:         'Accès camion disponible entre 7h et 17h.',
     photoUrls:     [],
     bids:          [],
-    client:        { companyName: 'Imex Maroc SARL', phone: '+212 6 12 34 56 78' },
+    client:        { clientType: 'BUSINESS', companyName: 'Imex Maroc SARL', fullName: 'Karim Benali', phone: '+212 6 12 34 56 78' },
   },
   'job-002': {
     ...mockJobs[1],
@@ -108,7 +108,7 @@ export const mockJobDetails: Record<string, JobDetail> = {
     destAddress:   'Marché central, Hay Mohammadi, Casablanca',
     photoUrls:     [],
     bids:          [],
-    client:        { companyName: 'BioFruits Sud SARL', phone: '+212 6 78 90 12 34' },
+    client:        { clientType: 'BUSINESS', companyName: 'BioFruits Sud SARL', fullName: 'Omar El Fassi', phone: '+212 6 78 90 12 34' },
   },
   'job-003': {
     ...mockJobs[2],
@@ -119,6 +119,6 @@ export const mockJobDetails: Record<string, JobDetail> = {
     destAddress:   'Zone Industrielle Sidi Brahim, Fès',
     photoUrls:     [],
     bids:          [],
-    client:        { companyName: 'TechDistrib Maroc', phone: '+212 5 37 12 34 56' },
+    client:        { clientType: 'INDIVIDUAL', fullName: 'Salma Bennani', phone: '+212 6 70 88 99 00' },
   },
 };

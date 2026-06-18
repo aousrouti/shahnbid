@@ -6,9 +6,9 @@ import BidCard from '@/components/bids/BidCard';
 import EmptyState from '@/components/shared/EmptyState';
 import { mockJobDetails } from '@/lib/mock-data/jobs';
 import { mockBids } from '@/lib/mock-data/bids';
-import { formatDate, formatWeight, formatMAD } from '@/lib/utils';
-import { CARGO_TYPE_LABELS } from '@/lib/constants';
-import { MapPin, Package, Calendar, Phone, Building2 } from 'lucide-react';
+import { formatDate, formatWeight, formatMAD, clientDisplayName } from '@/lib/utils';
+import { CARGO_TYPE_LABELS, CLIENT_TYPE_LABELS } from '@/lib/constants';
+import { MapPin, Package, Calendar, Phone, Building2, User } from 'lucide-react';
 import Link from 'next/link';
 
 export default function ClientJobDetailPage({ params }: { params: { id: string } }) {
@@ -71,8 +71,11 @@ export default function ClientJobDetailPage({ params }: { params: { id: string }
         </div>
 
         <div className="mt-4 border-t border-brand-border pt-4 flex items-center gap-4 text-sm text-gray-600">
-          <Building2 size={14} className="text-gray-400" />
-          <span className="font-medium">{job.client.companyName}</span>
+          {job.client.clientType === 'BUSINESS'
+            ? <Building2 size={14} className="text-gray-400" />
+            : <User size={14} className="text-gray-400" />}
+          <span className="font-medium">{clientDisplayName(job.client)}</span>
+          <span className="text-xs px-2 py-0.5 bg-brand-light text-brand-primary rounded-badge font-medium">{CLIENT_TYPE_LABELS[job.client.clientType]}</span>
           <Phone size={14} className="text-gray-400" />
           <span>{job.client.phone}</span>
         </div>

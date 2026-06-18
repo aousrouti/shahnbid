@@ -2,13 +2,25 @@
 import { z } from 'zod';
 
 export const registerClientSchema = z.object({
+  clientType:  z.enum(['INDIVIDUAL', 'BUSINESS']),
   email:       z.string().email('Email invalide'),
   password:    z.string().min(8, 'Minimum 8 caractères'),
   fullName:    z.string().min(2, 'Nom requis'),
   phone:       z.string().regex(/^(\+212|0)[567]\d{8}$/, 'Numéro marocain invalide'),
-  companyName: z.string().min(2, 'Raison sociale requise'),
-  address:     z.string().min(5, 'Adresse requise'),
   city:        z.string().min(2, 'Ville requise'),
+  // Business-only fields — optional at the type level, enforced below for BUSINESS.
+  companyName: z.string().optional(),
+  ice:         z.string().optional(),
+  address:     z.string().optional(),
+}).superRefine((d, ctx) => {
+  if (d.clientType === 'BUSINESS') {
+    if (!d.companyName || d.companyName.trim().length < 2)
+      ctx.addIssue({ code: 'custom', path: ['companyName'], message: 'Raison sociale requise' });
+    if (!d.ice || !/^\d{15}$/.test(d.ice))
+      ctx.addIssue({ code: 'custom', path: ['ice'], message: 'ICE invalide (15 chiffres)' });
+    if (!d.address || d.address.trim().length < 5)
+      ctx.addIssue({ code: 'custom', path: ['address'], message: 'Adresse requise' });
+  }
 });
 
 export const registerCarrierSchema = z.object({
