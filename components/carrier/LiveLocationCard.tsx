@@ -1,6 +1,6 @@
 'use client';
 
-import { MapPin, Navigation, BellRing, LoaderCircle, ShieldAlert } from 'lucide-react';
+import { MapPin, Navigation, BellRing, LoaderCircle, ShieldAlert, X } from 'lucide-react';
 import type { GeoStatus } from '@/lib/hooks/useGeolocation';
 import { formatKm } from '@/lib/geo';
 import { CARGO_TYPE_LABELS } from '@/lib/constants';
@@ -33,8 +33,11 @@ export default function LiveLocationCard({ status, accuracy, nearest, onEnable, 
             </span>
             Position en direct activée
           </div>
-          <button onClick={onDisable} className="text-xs text-gray-400 hover:text-gray-600 hover:underline">
-            Désactiver
+          <button
+            onClick={onDisable}
+            className="inline-flex items-center gap-1 rounded-input border border-status-success/40 px-2.5 py-1 text-xs font-semibold text-status-success transition-colors hover:bg-status-success/15"
+          >
+            <X size={13} /> Arrêter le partage
           </button>
         </div>
 

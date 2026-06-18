@@ -9,7 +9,7 @@ import { cityCoords, interpolate, suggestJobsOnRoute, formatKm, haversineKm } fr
 import type { JobSuggestion, LatLng } from '@/lib/geo';
 import { CARGO_TYPE_LABELS } from '@/lib/constants';
 import { formatWeight } from '@/lib/utils';
-import { useGeolocation } from '@/lib/hooks/useGeolocation';
+import { useCarrierLocation } from './LocationProvider';
 import LiveLocationCard from './LiveLocationCard';
 import PushControls from './PushControls';
 import { Navigation, Package, Route, TrendingUp, ArrowRight } from 'lucide-react';
@@ -57,7 +57,7 @@ export default function CarrierMapPanel({ variant = 'full' }: { variant?: 'full'
   const carrierFrom = cityCoords(trip.fromCity)!;
   const carrierTo = cityCoords(trip.toCity)!;
 
-  const geo = useGeolocation();
+  const geo = useCarrierLocation();
   const live = geo.status === 'granted' && geo.position != null;
 
   const [progress, setProgress] = useState(trip.defaultProgress);
