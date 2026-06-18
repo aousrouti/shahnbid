@@ -2,6 +2,7 @@ import Link from 'next/link';
 import KpiCard from '@/components/shared/KpiCard';
 import JobCard from '@/components/jobs/JobCard';
 import PageHeader from '@/components/shared/PageHeader';
+import CarrierMapPanel from '@/components/carrier/CarrierMapPanel';
 import { mockJobs } from '@/lib/mock-data/jobs';
 import { mockApprovedCarrier } from '@/lib/mock-data/users';
 import { Search, FileText, RotateCcw, DollarSign } from 'lucide-react';
@@ -21,6 +22,10 @@ export default function CarrierDashboardPage() {
         <KpiCard label="Offres soumises"      value={3}        icon={FileText} delta={50} deltaPositive />
         <KpiCard label="Retours publiés"      value={2}        icon={RotateCcw} />
         <KpiCard label="Revenus du mois (MAD)" value="12 500" icon={DollarSign} delta={8} deltaPositive />
+      </div>
+
+      <div className="rounded-card border border-brand-border bg-white p-4">
+        <CarrierMapPanel variant="compact" />
       </div>
 
       <div>
