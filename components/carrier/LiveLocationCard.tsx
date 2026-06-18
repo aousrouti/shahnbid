@@ -57,6 +57,11 @@ export default function LiveLocationCard({ status, accuracy, nearest, onEnable, 
         {accuracy != null && (
           <p className="mt-2 text-[11px] text-gray-400">Précision ≈ {formatKm(accuracy / 1000)}</p>
         )}
+
+        <p className="mt-2 text-[11px] text-gray-400">
+          « Arrêter le partage » suffit pour que ShahnBid cesse d’utiliser votre position et les alertes push.
+          Pour révoquer complètement l’accès, modifiez les autorisations de votre navigateur.
+        </p>
       </div>
     );
   }

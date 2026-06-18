@@ -1,12 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Bell, BellOff, BellRing, LoaderCircle, ShieldAlert } from 'lucide-react';
 import { usePush, type PushPayload } from '@/lib/hooks/usePush';
+import { useCarrierLocation } from './LocationProvider';
 
 export default function PushControls({ testPayload }: { testPayload?: PushPayload }) {
   const { status, subscribe, unsubscribe, sendTest } = usePush();
   const [testState, setTestState] = useState<'idle' | 'sending' | 'sent'>('idle');
+
+  // Push alerts are location-based: when the carrier stops sharing location,
+  // automatically unsubscribe from push too.
+  const { status: geoStatus } = useCarrierLocation();
+  const prevGeo = useRef(geoStatus);
+  useEffect(() => {
+    const was = prevGeo.current;
+    prevGeo.current = geoStatus;
+    if (was === 'granted' && geoStatus !== 'granted' && status === 'subscribed') {
+      unsubscribe();
+    }
+  }, [geoStatus, status, unsubscribe]);
 
   if (status === 'unsupported') {
     return (
