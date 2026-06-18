@@ -58,6 +58,18 @@ export const CLIENT_TYPE_LABELS: Record<string, string> = {
   BUSINESS:   'Entreprise',
 };
 
+export const DEFAULT_COUNTRY = 'Maroc';
+
+// Registration is open beyond Morocco. Morocco first, then a broad list.
+export const COUNTRIES = [
+  'Maroc', 'Algérie', 'Tunisie', 'Libye', 'Mauritanie', 'Égypte',
+  'Sénégal', "Côte d'Ivoire", 'Mali', 'Nigéria', 'Afrique du Sud',
+  'France', 'Espagne', 'Portugal', 'Italie', 'Allemagne', 'Belgique',
+  'Pays-Bas', 'Royaume-Uni', 'Suisse', 'Turquie',
+  'Arabie saoudite', 'Émirats arabes unis', 'Qatar', 'Koweït',
+  'États-Unis', 'Canada', 'Chine', 'Inde', 'Brésil', 'Autre',
+] as const;
+
 export const JOB_STATUS_LABELS: Record<string, string> = {
   DRAFT:      'Brouillon',
   PUBLISHED:  'Ouvert aux offres',

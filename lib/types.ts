@@ -55,6 +55,7 @@ export interface ClientProfile {
   ice?: string;           // BUSINESS only — Moroccan company tax ID (15 digits)
   address?: string;       // BUSINESS only
   city: string;
+  country: string;
   createdAt: string;
 }
 
@@ -124,6 +125,7 @@ export interface RegisterClientPayload {
   password: string;
   fullName: string;
   phone: string;
+  country: string;
   city: string;
   companyName?: string;   // BUSINESS only
   ice?: string;           // BUSINESS only
@@ -136,6 +138,7 @@ export interface RegisterCarrierPayload {
   fullName: string;
   phone: string;
   companyName: string;
+  country: string;
   city: string;
   licenseNumber: string;
   insuranceExpiry: string;

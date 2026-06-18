@@ -6,13 +6,14 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { registerCarrierSchema, type RegisterCarrierInput } from '@/lib/validations';
-import { MOROCCAN_CITIES } from '@/lib/constants';
+import { COUNTRIES, DEFAULT_COUNTRY } from '@/lib/constants';
 
 export default function RegisterCarrierPage() {
   const router = useRouter();
   const [serverError, setServerError] = useState('');
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterCarrierInput>({
     resolver: zodResolver(registerCarrierSchema),
+    defaultValues: { country: DEFAULT_COUNTRY },
   });
 
   async function onSubmit(data: RegisterCarrierInput) {
@@ -70,11 +71,15 @@ export default function RegisterCarrierPage() {
               {errors.companyName && <p className="text-xs text-red-600 mt-1">{errors.companyName.message}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Ville principale</label>
-              <select {...register('city')} className={field}>
-                <option value="">Sélectionner</option>
-                {MOROCCAN_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              <label className="block text-sm font-medium text-gray-700 mb-1">Pays</label>
+              <select {...register('country')} className={field}>
+                {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
+              {errors.country && <p className="text-xs text-red-600 mt-1">{errors.country.message}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Ville principale</label>
+              <input {...register('city')} placeholder="Votre ville" className={field} />
               {errors.city && <p className="text-xs text-red-600 mt-1">{errors.city.message}</p>}
             </div>
             <div>

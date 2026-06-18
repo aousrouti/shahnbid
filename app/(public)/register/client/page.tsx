@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { registerClientSchema, type RegisterClientInput } from '@/lib/validations';
-import { MOROCCAN_CITIES, CLIENT_TYPE_LABELS } from '@/lib/constants';
+import { COUNTRIES, DEFAULT_COUNTRY, CLIENT_TYPE_LABELS } from '@/lib/constants';
 import { Building2, User } from 'lucide-react';
 
 export default function RegisterClientPage() {
@@ -14,7 +14,7 @@ export default function RegisterClientPage() {
   const [serverError, setServerError] = useState('');
   const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<RegisterClientInput>({
     resolver: zodResolver(registerClientSchema),
-    defaultValues: { clientType: 'BUSINESS' },
+    defaultValues: { clientType: 'BUSINESS', country: DEFAULT_COUNTRY },
   });
 
   const clientType = watch('clientType');
@@ -114,12 +114,16 @@ export default function RegisterClientPage() {
               </>
             )}
 
-            <div className={isBusiness ? '' : 'sm:col-span-2'}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Ville</label>
-              <select {...register('city')} className={field}>
-                <option value="">Sélectionner</option>
-                {MOROCCAN_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Pays</label>
+              <select {...register('country')} className={field}>
+                {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
+              {errors.country && <p className="text-xs text-red-600 mt-1">{errors.country.message}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Ville</label>
+              <input {...register('city')} placeholder="Votre ville" className={field} />
               {errors.city && <p className="text-xs text-red-600 mt-1">{errors.city.message}</p>}
             </div>
           </div>

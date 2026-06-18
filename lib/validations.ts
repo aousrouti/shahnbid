@@ -6,7 +6,8 @@ export const registerClientSchema = z.object({
   email:       z.string().email('Email invalide'),
   password:    z.string().min(8, 'Minimum 8 caractères'),
   fullName:    z.string().min(2, 'Nom requis'),
-  phone:       z.string().regex(/^(\+212|0)[567]\d{8}$/, 'Numéro marocain invalide'),
+  phone:       z.string().regex(/^\+?[0-9][0-9\s().-]{6,19}$/, 'Numéro de téléphone invalide'),
+  country:     z.string().min(2, 'Pays requis'),
   city:        z.string().min(2, 'Ville requise'),
   // Business-only fields — optional at the type level, enforced below for BUSINESS.
   companyName: z.string().optional(),
@@ -27,8 +28,9 @@ export const registerCarrierSchema = z.object({
   email:           z.string().email('Email invalide'),
   password:        z.string().min(8, 'Minimum 8 caractères'),
   fullName:        z.string().min(2, 'Nom requis'),
-  phone:           z.string().regex(/^(\+212|0)[567]\d{8}$/, 'Numéro marocain invalide'),
+  phone:           z.string().regex(/^\+?[0-9][0-9\s().-]{6,19}$/, 'Numéro de téléphone invalide'),
   companyName:     z.string().min(2, 'Raison sociale requise'),
+  country:         z.string().min(2, 'Pays requis'),
   city:            z.string().min(2, 'Ville requise'),
   licenseNumber:   z.string().min(3, 'Numéro de licence requis'),
   insuranceExpiry: z.string().refine(

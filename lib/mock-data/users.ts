@@ -14,6 +14,7 @@ export const mockClientProfile: ClientProfile = {
   companyName:    'Imex Maroc SARL',
   ice:            '001234567000089',
   address:        'Zone Industrielle Aïn Sebaâ, Lot 42',
+  country:        'Maroc',
   city:           'Casablanca',
   createdAt:      '2026-01-15T09:00:00Z',
 };
@@ -27,6 +28,7 @@ export const mockIndividualClientProfile: ClientProfile = {
   phone:          '+212 6 70 88 99 00',
   role:           'CLIENT',
   clientType:     'INDIVIDUAL',
+  country:        'Maroc',
   city:           'Rabat',
   createdAt:      '2026-05-02T16:00:00Z',
 };

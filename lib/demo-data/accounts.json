@@ -11,6 +11,7 @@
       "clientType": "BUSINESS",
       "companyName": "Imex Maroc SARL",
       "ice": "001234567000089",
+      "country": "Maroc",
       "city": "Casablanca"
     },
     {
@@ -21,6 +22,7 @@
       "fullName": "Hassan Ouali",
       "phone": "+212 6 61 11 22 33",
       "companyName": "Atlas Transport Casablanca",
+      "country": "Maroc",
       "city": "Casablanca",
       "status": "APPROVED"
     },

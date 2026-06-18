@@ -1,5 +1,6 @@
 import KpiCard from '@/components/shared/KpiCard';
 import PageHeader from '@/components/shared/PageHeader';
+import AdminNotifications from '@/components/admin/AdminNotifications';
 import { mockJobs } from '@/lib/mock-data/jobs';
 import { mockAllCarriers } from '@/lib/mock-data/users';
 import { Users, Briefcase, DollarSign, Clock } from 'lucide-react';
@@ -19,6 +20,8 @@ export default function AdminDashboardPage() {
         <KpiCard label="Approbations en attente" value={pendingCarriers}         icon={Clock} />
         <KpiCard label="Commission totale (MAD)" value={`${totalCommission.toLocaleString('fr-MA')}`} icon={DollarSign} delta={20} deltaPositive />
       </div>
+
+      <AdminNotifications />
 
       {/* Quick stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { registerCarrierSchema } from '@/lib/validations';
 import { addAccount, emailExists } from '@/lib/demo-data/accounts';
 import { SESSION_COOKIE, createToken } from '@/lib/auth/session';
+import { addAdminNotification } from '@/lib/notifications/store';
 
 export const runtime = 'nodejs';
 
@@ -24,11 +25,19 @@ export async function POST(req: Request) {
     fullName: d.fullName,
     phone: d.phone,
     companyName: d.companyName,
+    country: d.country,
     city: d.city,
     licenseNumber: d.licenseNumber,
     insuranceExpiry: d.insuranceExpiry,
     status: 'PENDING',
   });
+
+  addAdminNotification({
+    type: 'NEW_CARRIER',
+    title: "Nouveau transporteur en attente d'approbation",
+    body: `${account.companyName} — ${d.city}, ${d.country} · licence ${d.licenseNumber}`,
+    link: '/admin/users',
+  }, new Date().toISOString());
 
   const token = await createToken({ id: account.id, role: 'CARRIER' });
   const res = NextResponse.json({ ok: true, redirect: '/carrier/dashboard' });

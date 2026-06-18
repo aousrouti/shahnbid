@@ -15,6 +15,7 @@ export interface DemoAccount {
   companyName?: string;
   ice?: string;
   address?: string;
+  country?: string;
   city?: string;
   status?: CarrierStatus;
   licenseNumber?: string;
