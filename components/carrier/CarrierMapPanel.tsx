@@ -11,6 +11,7 @@ import { CARGO_TYPE_LABELS } from '@/lib/constants';
 import { formatWeight } from '@/lib/utils';
 import { useGeolocation } from '@/lib/hooks/useGeolocation';
 import LiveLocationCard from './LiveLocationCard';
+import PushControls from './PushControls';
 import { Navigation, Package, Route, TrendingUp, ArrowRight } from 'lucide-react';
 
 const RouteMap = dynamic(() => import('./RouteMap'), {
@@ -106,15 +107,26 @@ export default function CarrierMapPanel({ variant = 'full' }: { variant?: 'full'
     }
   }
 
+  const testPayload = nearest
+    ? {
+        title: 'Nouvelle offre à proximité',
+        body: `${nearest.job.originCity} → ${nearest.job.destCity} · à ${formatKm(nearest.distanceKm)} de vous`,
+        url: `/carrier/jobs/${nearest.job.id}`,
+      }
+    : undefined;
+
   const locationCard = (
-    <LiveLocationCard
-      status={geo.status}
-      accuracy={geo.accuracy}
-      nearest={nearest}
-      onEnable={handleEnable}
-      onDisable={geo.disable}
-      compact={variant === 'compact'}
-    />
+    <div className="space-y-2">
+      <LiveLocationCard
+        status={geo.status}
+        accuracy={geo.accuracy}
+        nearest={nearest}
+        onEnable={handleEnable}
+        onDisable={geo.disable}
+        compact={variant === 'compact'}
+      />
+      <PushControls testPayload={testPayload} />
+    </div>
   );
 
   const map = (

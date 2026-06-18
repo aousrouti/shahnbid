@@ -824,6 +824,8 @@ export type PostReturnTripInput    = z.infer<typeof postReturnTripSchema>;
 | GET | /api/admin/carriers | ADMIN | List carriers with status |
 | POST | /api/admin/carriers/[id]/approve | ADMIN | Approve carrier |
 | GET | /api/admin/commission | ADMIN | Commission log |
+| POST | /api/push/subscribe | CARRIER | Register/remove a browser push subscription (Web Push / VAPID) |
+| POST | /api/push/send | System | Send a push to matching carriers (triggered on new matching job) |
 
 ### Critical transactions
 
@@ -1001,6 +1003,11 @@ ADMIN_EMAIL=admin@shahnbid.ma
 
 # App
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Web Push (VAPID) — generate with: npx web-push generate-vapid-keys
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=mailto:admin@shahnbid.ma
 
 # AWS SES (alternative email — optional)
 AWS_REGION=eu-west-1
