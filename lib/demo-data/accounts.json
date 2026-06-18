@@ -1,0 +1,35 @@
+{
+  "_comment": "Demo accounts for flow validation. Credentials are checked against this file by /api/auth/login. NOT real auth — replaced by Entra External ID in the backend phase.",
+  "accounts": [
+    {
+      "id": "client-001",
+      "role": "CLIENT",
+      "email": "chargeur@shahnbid.ma",
+      "password": "Chargeur2026",
+      "fullName": "Karim Benali",
+      "phone": "+212 6 12 34 56 78",
+      "clientType": "BUSINESS",
+      "companyName": "Imex Maroc SARL",
+      "ice": "001234567000089",
+      "city": "Casablanca"
+    },
+    {
+      "id": "carrier-001",
+      "role": "CARRIER",
+      "email": "transporteur@shahnbid.ma",
+      "password": "Transporteur2026",
+      "fullName": "Hassan Ouali",
+      "phone": "+212 6 61 11 22 33",
+      "companyName": "Atlas Transport Casablanca",
+      "city": "Casablanca",
+      "status": "APPROVED"
+    },
+    {
+      "id": "admin-001",
+      "role": "ADMIN",
+      "email": "admin@shahnbid.ma",
+      "password": "Admin2026",
+      "fullName": "Admin ShahnBid"
+    }
+  ]
+}

@@ -11,6 +11,20 @@ opt-in location + Web Push alerts.
 > authentication or database yet. Anyone with the URL can open any portal. Suitable for
 > demos/UX review, not for real users. Backend (Entra auth + PostgreSQL/Prisma) comes next.
 
+## Demo accounts (flow validation)
+
+Login authenticates against [`lib/demo-data/accounts.json`](lib/demo-data/accounts.json)
+(not real auth — replaced by Entra in the backend phase). Sign in at `/login`:
+
+| Role | Email | Password |
+|---|---|---|
+| Chargeur (client) | `chargeur@shahnbid.ma` | `Chargeur2026` |
+| Transporteur (carrier) | `transporteur@shahnbid.ma` | `Transporteur2026` |
+| Admin | `admin@shahnbid.ma` | `Admin2026` |
+
+The portals (`/client`, `/carrier`, `/admin`) require a matching logged-in role;
+visiting them while logged out redirects to `/login`.
+
 ## Run locally
 
 ```bash
@@ -42,6 +56,7 @@ npx web-push generate-vapid-keys
 | `VAPID_SUBJECT` | `mailto:admin@shahnbid.ma` |
 | `NEXT_PUBLIC_APP_URL` | Your Vercel URL, e.g. `https://shahnbid.vercel.app` |
 | `DEMO_GATE_PASSWORD` | Optional. Set a value to lock the demo behind a shared-password screen; leave unset to disable. |
+| `SESSION_SECRET` | Long random string used to sign demo login sessions. Set on the host. |
 
 The Azure/Entra/Postgres variables in `.env.example` are placeholders for the backend
 phase and are **not** required for the current mock build.

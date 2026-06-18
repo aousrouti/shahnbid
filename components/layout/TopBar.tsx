@@ -1,4 +1,5 @@
-import { Bell, ChevronDown } from 'lucide-react';
+import { Bell } from 'lucide-react';
+import LogoutButton from './LogoutButton';
 
 interface TopBarProps {
   userName: string;
@@ -20,8 +21,8 @@ export default function TopBar({ userName, role }: TopBarProps) {
           <span className="font-medium text-brand-navy">{userName}</span>
           <span className="text-gray-400">·</span>
           <span className="text-gray-400">{role}</span>
-          <ChevronDown size={14} className="text-gray-400" />
         </div>
+        <LogoutButton />
       </div>
     </header>
   );
