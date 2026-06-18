@@ -5,3 +5,8 @@ node_modules/
 out/
 dist/
 *.tsbuildinfo
+
+# Editor / IDE
+.vs/
+.vscode/*
+!.vscode/extensions.json
