@@ -41,6 +41,7 @@ npx web-push generate-vapid-keys
 | `VAPID_PRIVATE_KEY` | Web Push private key (server only) |
 | `VAPID_SUBJECT` | `mailto:admin@shahnbid.ma` |
 | `NEXT_PUBLIC_APP_URL` | Your Vercel URL, e.g. `https://shahnbid.vercel.app` |
+| `DEMO_GATE_PASSWORD` | Optional. Set a value to lock the demo behind a shared-password screen; leave unset to disable. |
 
 The Azure/Entra/Postgres variables in `.env.example` are placeholders for the backend
 phase and are **not** required for the current mock build.
