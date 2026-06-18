@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Search, FileText, RotateCcw, Settings } from 'lucide-react';
+import { LayoutDashboard, Search, FileText, RotateCcw, Settings, Map } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const links = [
   { href: '/carrier/dashboard', label: 'Tableau de bord',   icon: LayoutDashboard },
+  { href: '/carrier/map',       label: 'Carte & trajets',    icon: Map },
   { href: '/carrier/jobs',      label: 'Appels d\'offres',   icon: Search },
   { href: '/carrier/bids',      label: 'Mes offres',         icon: FileText },
   { href: '/carrier/returns',   label: 'Mes retours',        icon: RotateCcw },

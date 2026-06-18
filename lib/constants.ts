@@ -3,9 +3,34 @@
 export const MOROCCAN_CITIES = [
   'Casablanca', 'Rabat', 'Marrakech', 'Fès', 'Tanger', 'Agadir',
   'Meknès', 'Oujda', 'Kénitra', 'Tétouan', 'Safi', 'El Jadida',
-  'Nador', 'Béni Mellal', 'Mohammadia', 'Khouribga', 'Settat',
+  'Nador', 'Al Hoceima', 'Béni Mellal', 'Mohammadia', 'Khouribga', 'Settat',
   'Laâyoune', 'Dakhla', 'Taza',
 ] as const;
+
+// Approximate [lat, lng] for each Moroccan city — used by the carrier map.
+export const CITY_COORDS: Record<string, [number, number]> = {
+  'Casablanca':  [33.5731, -7.5898],
+  'Rabat':       [34.0209, -6.8416],
+  'Marrakech':   [31.6295, -7.9811],
+  'Fès':         [34.0181, -5.0078],
+  'Tanger':      [35.7595, -5.8340],
+  'Agadir':      [30.4278, -9.5981],
+  'Meknès':      [33.8935, -5.5473],
+  'Oujda':       [34.6814, -1.9086],
+  'Kénitra':     [34.2610, -6.5802],
+  'Tétouan':     [35.5785, -5.3684],
+  'Safi':        [32.2994, -9.2372],
+  'El Jadida':   [33.2316, -8.5007],
+  'Nador':       [35.1681, -2.9335],
+  'Al Hoceima':  [35.2517, -3.9372],
+  'Béni Mellal': [32.3373, -6.3498],
+  'Mohammadia':  [33.6863, -7.3829],
+  'Khouribga':   [32.8811, -6.9063],
+  'Settat':      [33.0010, -7.6166],
+  'Laâyoune':    [27.1253, -13.1625],
+  'Dakhla':      [23.6848, -15.9580],
+  'Taza':        [34.2100, -4.0100],
+};
 
 export const CARGO_TYPE_LABELS: Record<string, string> = {
   GENERAL:      'Général',
