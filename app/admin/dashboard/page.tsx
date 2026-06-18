@@ -2,13 +2,14 @@ import KpiCard from '@/components/shared/KpiCard';
 import PageHeader from '@/components/shared/PageHeader';
 import AdminNotifications from '@/components/admin/AdminNotifications';
 import { mockJobs } from '@/lib/mock-data/jobs';
-import { mockAllCarriers } from '@/lib/mock-data/users';
+import { listCarriers } from '@/lib/demo-data/accounts';
 import { Users, Briefcase, DollarSign, Clock } from 'lucide-react';
 
 export default function AdminDashboardPage() {
+  const carriers        = listCarriers();
   const completedJobs   = mockJobs.filter((j) => j.status === 'COMPLETED');
   const totalCommission = completedJobs.reduce((sum, j) => sum + (j.agreedPriceMAD ?? 0) * 0.1, 0);
-  const pendingCarriers = mockAllCarriers.filter((c) => c.status === 'PENDING').length;
+  const pendingCarriers = carriers.filter((c) => c.status === 'PENDING').length;
 
   return (
     <div className="space-y-6">
@@ -16,7 +17,7 @@ export default function AdminDashboardPage() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard label="Expéditions totales"     value={mockJobs.length}         icon={Briefcase} delta={12} deltaPositive />
-        <KpiCard label="Transporteurs inscrits"  value={mockAllCarriers.length}  icon={Users} />
+        <KpiCard label="Transporteurs inscrits"  value={carriers.length}         icon={Users} />
         <KpiCard label="Approbations en attente" value={pendingCarriers}         icon={Clock} />
         <KpiCard label="Commission totale (MAD)" value={`${totalCommission.toLocaleString('fr-MA')}`} icon={DollarSign} delta={20} deltaPositive />
       </div>

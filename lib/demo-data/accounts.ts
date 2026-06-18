@@ -20,6 +20,7 @@ export interface DemoAccount {
   status?: CarrierStatus;
   licenseNumber?: string;
   insuranceExpiry?: string;
+  createdAt?: string;
 }
 
 export type PublicAccount = Omit<DemoAccount, 'password'>;
@@ -60,4 +61,22 @@ export function addAccount(input: Omit<DemoAccount, 'id'>): PublicAccount {
   const account: DemoAccount = { ...input, id };
   store.set(id, account);
   return sanitize(account);
+}
+
+/** All carrier accounts, PENDING first, then newest. */
+export function listCarriers(): PublicAccount[] {
+  const rank: Record<string, number> = { PENDING: 0, APPROVED: 1, SUSPENDED: 2, REJECTED: 3 };
+  return Array.from(store.values())
+    .filter((a) => a.role === 'CARRIER')
+    .sort((a, b) => (rank[a.status ?? 'PENDING'] - rank[b.status ?? 'PENDING'])
+      || (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
+    .map(sanitize);
+}
+
+/** Update a carrier's approval status. Returns the updated account or null. */
+export function setCarrierStatus(id: string, status: CarrierStatus): PublicAccount | null {
+  const a = store.get(id);
+  if (!a || a.role !== 'CARRIER') return null;
+  a.status = status;
+  return sanitize(a);
 }
