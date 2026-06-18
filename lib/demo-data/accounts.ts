@@ -1,5 +1,7 @@
-// Loader + lookups over the demo accounts JSON.
-import data from './accounts.json';
+// Runtime account store, seeded from accounts.json. Supports in-session
+// registration (new accounts persist in memory for the running server).
+// Backend phase: replace with the Profile/ClientProfile/CarrierProfile tables.
+import seed from './accounts.json';
 import type { UserRole, ClientType, CarrierStatus } from '@/lib/types';
 
 export interface DemoAccount {
@@ -12,28 +14,49 @@ export interface DemoAccount {
   clientType?: ClientType;
   companyName?: string;
   ice?: string;
+  address?: string;
   city?: string;
   status?: CarrierStatus;
+  licenseNumber?: string;
+  insuranceExpiry?: string;
 }
 
 export type PublicAccount = Omit<DemoAccount, 'password'>;
 
-const ACCOUNTS = (data.accounts as DemoAccount[]);
+// Survive Next dev HMR by stashing the store on globalThis.
+const g = globalThis as unknown as { __shahnbidAccounts?: Map<string, DemoAccount> };
+const store: Map<string, DemoAccount> =
+  g.__shahnbidAccounts ??
+  (g.__shahnbidAccounts = new Map((seed.accounts as DemoAccount[]).map((a) => [a.id, a])));
 
 function sanitize(a: DemoAccount): PublicAccount {
   const { password: _pw, ...rest } = a;
   return rest;
 }
 
-/** Validate an email + password against the demo accounts. Returns the account or null. */
 export function findByCredentials(email: string, password: string): PublicAccount | null {
-  const match = ACCOUNTS.find(
-    (a) => a.email.toLowerCase() === email.trim().toLowerCase() && a.password === password,
-  );
-  return match ? sanitize(match) : null;
+  const e = email.trim().toLowerCase();
+  for (const a of Array.from(store.values())) {
+    if (a.email.toLowerCase() === e && a.password === password) return sanitize(a);
+  }
+  return null;
 }
 
 export function getAccountById(id: string): PublicAccount | null {
-  const match = ACCOUNTS.find((a) => a.id === id);
-  return match ? sanitize(match) : null;
+  const a = store.get(id);
+  return a ? sanitize(a) : null;
+}
+
+export function emailExists(email: string): boolean {
+  const e = email.trim().toLowerCase();
+  for (const a of Array.from(store.values())) if (a.email.toLowerCase() === e) return true;
+  return false;
+}
+
+/** Create a new in-session account and return it (without the password). */
+export function addAccount(input: Omit<DemoAccount, 'id'>): PublicAccount {
+  const id = `${input.role.toLowerCase()}-${crypto.randomUUID().slice(0, 8)}`;
+  const account: DemoAccount = { ...input, id };
+  store.set(id, account);
+  return sanitize(account);
 }

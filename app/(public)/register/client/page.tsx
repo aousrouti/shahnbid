@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { registerClientSchema, type RegisterClientInput } from '@/lib/validations';
@@ -8,6 +10,8 @@ import { MOROCCAN_CITIES, CLIENT_TYPE_LABELS } from '@/lib/constants';
 import { Building2, User } from 'lucide-react';
 
 export default function RegisterClientPage() {
+  const router = useRouter();
+  const [serverError, setServerError] = useState('');
   const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<RegisterClientInput>({
     resolver: zodResolver(registerClientSchema),
     defaultValues: { clientType: 'BUSINESS' },
@@ -16,8 +20,20 @@ export default function RegisterClientPage() {
   const clientType = watch('clientType');
   const isBusiness = clientType === 'BUSINESS';
 
-  function onSubmit(data: RegisterClientInput) {
-    console.log('Inscription client (mock):', data);
+  async function onSubmit(data: RegisterClientInput) {
+    setServerError('');
+    const res = await fetch('/api/auth/register/client', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (res.ok) {
+      router.replace(json.redirect || '/client/dashboard');
+      router.refresh();
+    } else {
+      setServerError(json.error || 'Inscription impossible.');
+    }
   }
 
   const field = 'w-full border border-gray-300 rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary';
@@ -108,8 +124,10 @@ export default function RegisterClientPage() {
             </div>
           </div>
 
+          {serverError && <p className="text-sm text-red-600">{serverError}</p>}
+
           <button type="submit" disabled={isSubmitting} className="w-full py-2.5 bg-brand-primary text-white font-semibold rounded-input hover:bg-brand-mid transition-colors disabled:opacity-50">
-            Créer mon compte
+            {isSubmitting ? 'Création…' : 'Créer mon compte'}
           </button>
         </form>
 

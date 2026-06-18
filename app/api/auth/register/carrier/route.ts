@@ -1,0 +1,43 @@
+import { NextResponse } from 'next/server';
+import { registerCarrierSchema } from '@/lib/validations';
+import { addAccount, emailExists } from '@/lib/demo-data/accounts';
+import { SESSION_COOKIE, createToken } from '@/lib/auth/session';
+
+export const runtime = 'nodejs';
+
+export async function POST(req: Request) {
+  const body = await req.json().catch(() => null);
+  const parsed = registerCarrierSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Données invalides' }, { status: 400 });
+  }
+  const d = parsed.data;
+  if (emailExists(d.email)) {
+    return NextResponse.json({ error: 'Un compte existe déjà avec cet email.' }, { status: 409 });
+  }
+
+  // New carriers start PENDING (await admin approval) but can sign in to the portal.
+  const account = addAccount({
+    role: 'CARRIER',
+    email: d.email,
+    password: d.password,
+    fullName: d.fullName,
+    phone: d.phone,
+    companyName: d.companyName,
+    city: d.city,
+    licenseNumber: d.licenseNumber,
+    insuranceExpiry: d.insuranceExpiry,
+    status: 'PENDING',
+  });
+
+  const token = await createToken({ id: account.id, role: 'CARRIER' });
+  const res = NextResponse.json({ ok: true, redirect: '/carrier/dashboard' });
+  res.cookies.set(SESSION_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7,
+  });
+  return res;
+}

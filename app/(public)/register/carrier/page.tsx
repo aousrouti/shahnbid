@@ -1,18 +1,34 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { registerCarrierSchema, type RegisterCarrierInput } from '@/lib/validations';
 import { MOROCCAN_CITIES } from '@/lib/constants';
 
 export default function RegisterCarrierPage() {
+  const router = useRouter();
+  const [serverError, setServerError] = useState('');
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterCarrierInput>({
     resolver: zodResolver(registerCarrierSchema),
   });
 
-  function onSubmit(data: RegisterCarrierInput) {
-    console.log('Inscription transporteur (mock):', data);
+  async function onSubmit(data: RegisterCarrierInput) {
+    setServerError('');
+    const res = await fetch('/api/auth/register/carrier', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (res.ok) {
+      router.replace(json.redirect || '/carrier/dashboard');
+      router.refresh();
+    } else {
+      setServerError(json.error || 'Inscription impossible.');
+    }
   }
 
   const field = 'w-full border border-gray-300 rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary';
@@ -73,8 +89,10 @@ export default function RegisterCarrierPage() {
             </div>
           </div>
 
+          {serverError && <p className="text-sm text-red-600">{serverError}</p>}
+
           <button type="submit" disabled={isSubmitting} className="w-full py-2.5 bg-brand-primary text-white font-semibold rounded-input hover:bg-brand-mid transition-colors disabled:opacity-50">
-            Soumettre mon dossier
+            {isSubmitting ? 'Envoi…' : 'Soumettre mon dossier'}
           </button>
         </form>
 
