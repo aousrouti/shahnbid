@@ -1,16 +1,20 @@
 import { NextResponse } from 'next/server';
 import { saveSubscription, removeSubscription, subscriptionCount } from '@/lib/push/store';
+import { getCurrentUser } from '@/lib/auth/current-user';
 
 export const runtime = 'nodejs';
 
-// Register a browser push subscription.
+// Register a browser push subscription (tied to the logged-in user).
 export async function POST(req: Request) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+
   const body = await req.json().catch(() => null);
   const sub = body?.subscription ?? body;
   if (!sub?.endpoint || !sub?.keys?.p256dh || !sub?.keys?.auth) {
     return NextResponse.json({ error: 'Subscription invalide' }, { status: 400 });
   }
-  saveSubscription(sub);
+  saveSubscription(user.id, sub);
   return NextResponse.json({ ok: true, count: subscriptionCount() });
 }
 

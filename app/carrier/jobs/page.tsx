@@ -1,18 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import PageHeader from '@/components/shared/PageHeader';
 import JobCard from '@/components/jobs/JobCard';
 import EmptyState from '@/components/shared/EmptyState';
-import { mockJobs } from '@/lib/mock-data/jobs';
 import { MOROCCAN_CITIES } from '@/lib/constants';
+import type { JobSummary } from '@/lib/types';
 import { Search } from 'lucide-react';
 
 export default function CarrierJobBoardPage() {
   const [originFilter, setOriginFilter] = useState('');
   const [destFilter, setDestFilter]     = useState('');
+  const [jobs, setJobs]                 = useState<JobSummary[]>([]);
+  const [loading, setLoading]           = useState(true);
 
-  const jobs = mockJobs.filter((j) => j.status === 'PUBLISHED');
+  useEffect(() => {
+    fetch('/api/jobs?status=PUBLISHED', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((d) => setJobs(d.jobs ?? []))
+      .finally(() => setLoading(false));
+  }, []);
+
   const filtered = jobs.filter((j) => {
     if (originFilter && j.originCity !== originFilter) return false;
     if (destFilter   && j.destCity   !== destFilter)   return false;
@@ -44,7 +52,9 @@ export default function CarrierJobBoardPage() {
         )}
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <p className="text-sm text-gray-400 px-1">Chargement…</p>
+      ) : filtered.length === 0 ? (
         <EmptyState icon={<Search size={48} />} title="Aucune expédition trouvée" body="Modifiez les filtres pour voir d'autres résultats." />
       ) : (
         <div className="space-y-3">

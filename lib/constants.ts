@@ -53,6 +53,21 @@ export const VEHICLE_TYPES = [
 
 export const COMMISSION_RATE = 0.10;
 
+// Default pricing rules — the seed values for the admin-editable PricingSettings.
+// The live values are served from lib/pricing/store.ts; these are only the fallback.
+export const DEFAULT_PRICING = {
+  commissionRate: COMMISSION_RATE,   // 10%
+  minCommissionMAD: 50,              // never charge less than 50 MAD
+  vatRate: 0.20,                     // Moroccan TVA (20%) on the service fee
+  minJobPriceMAD: 100,              // matches the legacy Zod floor
+  commissionPayer: 'CARRIER' as const,
+} as const;
+
+export const COMMISSION_PAYER_LABELS: Record<string, string> = {
+  CARRIER: 'Déduit du transporteur',
+  CLIENT:  'Ajouté au client',
+};
+
 export const CLIENT_TYPE_LABELS: Record<string, string> = {
   INDIVIDUAL: 'Particulier',
   BUSINESS:   'Entreprise',

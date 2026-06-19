@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShahnBid — Application Flow Map</title>
+<style>
+  :root{
+    --navy:#0f2747; --blue:#1A56A3; --blue-light:#e8f0fb; --mid:#2f6fc7;
+    --ok:#127a4a; --ok-bg:#e4f5ec; --partial:#9a6700; --partial-bg:#fdf3da;
+    --planned:#6b7280; --planned-bg:#eef0f3;
+    --ink:#1f2937; --muted:#6b7280; --line:#dfe5ee; --bg:#f6f8fb; --card:#fff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;padding:32px 18px 64px}
+  .wrap{max-width:1040px;margin:0 auto}
+  header.top{margin-bottom:8px}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--blue)}
+  h1{font-size:30px;margin:4px 0 6px;color:var(--navy);letter-spacing:-.02em}
+  .sub{color:var(--muted);font-size:15px;max-width:680px}
+  .asof{color:var(--muted);font-size:13px;margin-top:6px}
+
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 30px}
+  .chip{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;
+    padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:#fff}
+  .dot{width:9px;height:9px;border-radius:50%}
+  .d-ok{background:var(--ok)} .d-partial{background:var(--partial)} .d-planned{background:var(--planned)}
+
+  h2.section{font-size:13px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+    color:var(--muted);margin:38px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+
+  /* Pipeline */
+  .lane{display:grid;grid-template-columns:96px 1fr;gap:14px;margin-bottom:18px;align-items:stretch}
+  .lane-label{display:flex;align-items:center;justify-content:center;text-align:center;
+    font-weight:700;font-size:13px;border-radius:12px;padding:10px 6px;color:#fff}
+  .l-client{background:linear-gradient(160deg,#1A56A3,#2f6fc7)}
+  .l-carrier{background:linear-gradient(160deg,#0f7a52,#16a06a)}
+  .l-admin{background:linear-gradient(160deg,#5b3f9a,#7b5fc0)}
+  .steps{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .step{position:relative;display:flex;flex-direction:column;gap:3px;background:var(--card);
+    border:1px solid var(--line);border-radius:11px;padding:9px 12px;min-width:128px;flex:1 1 128px}
+  .step .s-title{font-weight:650;font-size:13.5px;color:var(--navy);display:flex;align-items:center;gap:6px}
+  .step .s-meta{font-size:11.5px;color:var(--muted)}
+  .step .s-dot{position:absolute;top:9px;right:10px;width:8px;height:8px;border-radius:50%}
+  .arrow{color:#c2ccda;font-size:18px;flex:0 0 auto}
+  .step.ok{border-left:3px solid var(--ok)}
+  .step.partial{border-left:3px solid var(--partial)}
+  .step.planned{border-left:3px solid var(--planned);background:#fbfcfd}
+
+  /* Subsystem grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:14px 15px}
+  .card h3{margin:0 0 4px;font-size:14.5px;color:var(--navy);display:flex;align-items:center;gap:8px}
+  .card .badge{margin-left:auto;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;letter-spacing:.03em}
+  .b-ok{background:var(--ok-bg);color:var(--ok)} .b-partial{background:var(--partial-bg);color:var(--partial)}
+  .b-planned{background:var(--planned-bg);color:var(--planned)}
+  .card p{margin:6px 0 0;font-size:12.5px;color:var(--muted)}
+  .card ul{margin:8px 0 0;padding-left:16px;font-size:12.5px;color:var(--ink)}
+  .card li{margin:2px 0}
+
+  /* Remaining + roadmap */
+  .rows{display:flex;flex-direction:column;gap:10px}
+  .row{display:flex;gap:13px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+  .row .num{flex:0 0 30px;height:30px;border-radius:8px;background:var(--blue-light);color:var(--blue);
+    font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px}
+  .row .rbody{flex:1}
+  .row .rbody h4{margin:0 0 3px;font-size:14.5px;color:var(--navy);display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .row .rbody p{margin:0;font-size:12.8px;color:var(--muted)}
+  .pri{font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;letter-spacing:.04em;text-transform:uppercase}
+  .p1{background:#fde8e8;color:#b42318} .p2{background:var(--partial-bg);color:var(--partial)} .p3{background:var(--planned-bg);color:var(--planned)}
+  .tag{font-size:10.5px;font-weight:700;color:var(--mid);background:var(--blue-light);padding:2px 7px;border-radius:6px}
+  .foot{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+  .foot b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="eyebrow">ShahnBid · Freight Brokerage Marketplace</div>
+    <h1>Application Flow Map</h1>
+    <p class="sub">End-to-end picture of the dual-inventory marketplace — what's built and verified, what's partial, and what's planned. All flows currently run on a swappable in-memory data layer.</p>
+    <p class="asof">Status as of 19 Jun 2026 · Next.js 14 App Router · in-memory store (Prisma schema authored, swap pending)</p>
+  </header>
+
+  <div class="legend">
+    <span class="chip"><span class="dot d-ok"></span>Working &amp; verified</span>
+    <span class="chip"><span class="dot d-partial"></span>Partial / scaffolded</span>
+    <span class="chip"><span class="dot d-planned"></span>Planned</span>
+  </div>
+
+  <!-- ============ CORE FLOWS ============ -->
+  <h2 class="section">Core flows — by actor</h2>
+
+  <div class="lane">
+    <div class="lane-label l-client">Client<br>(Chargeur)</div>
+    <div class="steps">
+      <div class="step ok"><span class="s-dot d-ok"></span><span class="s-title">Register / Login</span><span class="s-meta">B2C + B2B, intl</span></div>
+      <span class="arrow">→</span>
+      <div class="step ok"><span class="s-dot d-ok"></span><span class="s-title">Post job</span><span class="s-meta">POST /api/jobs</span></div>
+      <span class="arrow">→</span>
+      <div class="step ok"><span class="s-dot d-ok"></span><span class="s-title">Review bids</span><span class="s-meta">live list</span></div>
+      <span class="arrow">→</span>
+      <div class="step ok"><span class="s-dot d-ok"></span><span class="s-title">Accept / reject</span><span class="s-meta">others auto-reject</span></div>
+      <span class="arrow">→</span>
+      <div class="step planned"><span class="s-dot d-planned"></span><span class="s-title">Track &amp; pay</span><span class="s-meta">lifecycle + payment</span></div>
+    </div>
+  </div>
+
+  <div class="lane">
+    <div class="lane-label l-carrier">Carrier<br>(Transporteur)</div>
+    <div class="steps">
+      <div class="step ok"><span class="s-dot d-ok"></span><span class="s-title">Register</span><span class="s-meta">→ PENDING</span></div>
+      <span class="arrow">→</span>
+      <div class="step ok"><span class="s-dot d-ok"></span><span class="s-title">Await approval</span><span class="s-meta">gated actions</span></div>
+      <span class="arrow">→</span>
+      <div class="step ok"><span class="s-dot d-ok"></span><span class="s-title">Browse + bid</span><span class="s-meta">price-floor enforced</span></div>
+      <span class="arrow">→</span>
+      <div class="step ok"><span class="s-dot d-ok"></span><span class="s-title">Publish returns</span><span class="s-meta">empty-leg capacity</span></div>
+      <span class="arrow">→</span>
+      <div class="step partial"><span class="s-dot d-partial"></span><span class="s-title">Live map + push</span><span class="s-meta">in-memory subs</span></div>
+    </div>
+  </div>
+
+  <div class="lane">
+    <div class="lane-label l-admin">Admin</div>
+    <div class="steps">
+      <div class="step ok"><span class="s-dot d-ok"></span><span class="s-title">New-signup alert</span><span class="s-meta">in-app feed</span></div>
+      <span class="arrow">→</span>
+      <div class="step ok"><span class="s-dot d-ok"></span><span class="s-title">Approve / reject</span><span class="s-meta">notifies carrier</span></div>
+      <span class="arrow">→</span>
+      <div class="step ok"><span class="s-dot d-ok"></span><span class="s-title">Set pricing</span><span class="s-meta">commission/VAT/floor</span></div>
+      <span class="arrow">→</span>
+      <div class="step ok"><span class="s-dot d-ok"></span><span class="s-title">Commission journal</span><span class="s-meta">live, VAT split</span></div>
+      <span class="arrow">→</span>
+      <div class="step partial"><span class="s-dot d-partial"></span><span class="s-title">Email follow-up</span><span class="s-meta">not wired</span></div>
+    </div>
+  </div>
+
+  <!-- ============ SUBSYSTEMS ============ -->
+  <h2 class="section">Subsystems</h2>
+  <div class="grid">
+
+    <div class="card">
+      <h3>Authentication <span class="badge b-partial">PARTIAL</span></h3>
+      <p>HMAC-signed session cookies, role-based middleware guards, demo password gate.</p>
+      <ul><li>✓ Login / logout / register</li><li>✓ Route protection by role</li><li>○ Plaintext demo creds → needs hashing + real IdP</li></ul>
+    </div>
+
+    <div class="card">
+      <h3>Carrier approval <span class="badge b-ok">WORKING</span></h3>
+      <p>Full lifecycle with notifications on every status change.</p>
+      <ul><li>✓ Approve / reject / suspend / reactivate</li><li>✓ Status banner + bid gating</li><li>✓ In-app + web-push to carrier</li></ul>
+    </div>
+
+    <div class="card">
+      <h3>Bid marketplace <span class="badge b-ok">WORKING</span></h3>
+      <p>The core transaction, verified through the UI across all 3 roles.</p>
+      <ul><li>✓ Post → bid → accept/reject</li><li>✓ Accept rejects others + sets agreed price</li><li>✓ One-bid-per-carrier, role gates</li></ul>
+    </div>
+
+    <div class="card">
+      <h3>Returns marketplace <span class="badge b-ok">WORKING</span></h3>
+      <p>Second loop for empty-leg capacity at a fixed price.</p>
+      <ul><li>✓ Publish → browse → book</li><li>✓ Carrier cancel, double-book blocked</li><li>○ Booking doesn't yet create a tracked job</li></ul>
+    </div>
+
+    <div class="card">
+      <h3>Admin pricing <span class="badge b-ok">WORKING</span></h3>
+      <p>Commission %, min fee, VAT, price floor, payer — with live preview.</p>
+      <ul><li>✓ Editable, validated, audited</li><li>✓ Drives commission journal + KPIs</li><li>✓ Price floor enforced server-side</li></ul>
+    </div>
+
+    <div class="card">
+      <h3>Dashboards <span class="badge b-ok">WORKING</span></h3>
+      <p>Carrier / client / admin KPIs on live counts, verified vs. source data.</p>
+      <ul><li>✓ Per-role scoped metrics</li><li>✓ Revenue / spend / commission</li><li>✓ Fabricated trend deltas removed</li></ul>
+    </div>
+
+    <div class="card">
+      <h3>Carrier live map <span class="badge b-partial">PARTIAL</span></h3>
+      <p>Leaflet map, location opt-in, nearest-job + on-the-way suggestions.</p>
+      <ul><li>✓ Geolocation + suggestions</li><li>✓ VAPID web push wired</li><li>○ Push subs reset on restart</li></ul>
+    </div>
+
+    <div class="card">
+      <h3>Data layer <span class="badge b-partial">PARTIAL</span></h3>
+      <p>Swappable repos (jobs, bids, returns, accounts, pricing, notifs).</p>
+      <ul><li>✓ Clean repo interfaces</li><li>✓ Prisma schema authored</li><li>○ In-memory — resets on restart</li></ul>
+    </div>
+
+    <div class="card">
+      <h3>Job lifecycle <span class="badge b-planned">PLANNED</span></h3>
+      <p>Statuses exist (PICKED_UP → IN_TRANSIT → DELIVERED → COMPLETED) but no transitions wired beyond ACCEPTED.</p>
+      <ul><li>○ Status advance UI + API</li><li>○ Notifications per transition</li></ul>
+    </div>
+
+    <div class="card">
+      <h3>Payments &amp; payout <span class="badge b-planned">PLANNED</span></h3>
+      <p>Commission is computed but never captured at a lifecycle event.</p>
+      <ul><li>○ Payment provider</li><li>○ Snapshot rate at acceptance</li><li>○ Carrier payout</li></ul>
+    </div>
+
+    <div class="card">
+      <h3>Email &amp; files <span class="badge b-planned">PLANNED</span></h3>
+      <p>Env placeholders exist (ACS/SES, Azure Blob); not wired.</p>
+      <ul><li>○ Transactional email</li><li>○ Cargo photo uploads</li></ul>
+    </div>
+
+    <div class="card">
+      <h3>Quality &amp; tests <span class="badge b-planned">PLANNED</span></h3>
+      <p>No automated tests yet; verification has been manual via preview.</p>
+      <ul><li>○ Unit tests on repos</li><li>○ API + e2e coverage</li></ul>
+    </div>
+
+  </div>
+
+  <!-- ============ ROADMAP ============ -->
+  <h2 class="section">Next steps — recommended order</h2>
+  <div class="rows">
+
+    <div class="row">
+      <div class="num">1</div>
+      <div class="rbody">
+        <h4>Prisma / Postgres swap <span class="pri p1">Unblocker</span> <span class="tag">~repo internals only</span></h4>
+        <p>Provision Postgres, run the authored migration, swap the repo function bodies to PrismaClient. Routes &amp; UI don't change. Ends the "resets on restart / doesn't share across serverless instances" limitation that touches every subsystem above.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="num">2</div>
+      <div class="rbody">
+        <h4>Real authentication <span class="pri p1">Security</span> <span class="tag">password hashing + IdP</span></h4>
+        <p>Replace plaintext demo credentials with hashed passwords; move to a real identity provider (Entra placeholders already in env). Prerequisite before any real users.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="num">3</div>
+      <div class="rbody">
+        <h4>Job lifecycle state machine <span class="pri p2">Core UX</span></h4>
+        <p>Wire the shipment status transitions (picked-up → in-transit → delivered → completed) with a per-transition notification, and complete the loop that today stops at ACCEPTED. Completing a job is what triggers commission.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="num">4</div>
+      <div class="rbody">
+        <h4>Payments &amp; commission capture <span class="pri p2">Revenue</span></h4>
+        <p>Integrate a payment provider and capture commission at the right lifecycle event; snapshot the commission rate onto the job at acceptance (schema field <b>commissionRateSnap</b> already reserved) so later pricing changes never rewrite history.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="num">5</div>
+      <div class="rbody">
+        <h4>Email + file uploads <span class="pri p3">Polish</span></h4>
+        <p>Wire transactional email (admin follow-ups, status alerts) and cargo photo uploads to blob storage. Env config already stubbed.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="num">6</div>
+      <div class="rbody">
+        <h4>Tests &amp; hardening <span class="pri p3">Confidence</span></h4>
+        <p>Add unit tests on the repo layer and API/e2e coverage on the two marketplaces, plus rate-limiting and input hardening before launch.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="foot">
+    <b>Bottom line:</b> the product is functionally complete on a demo data layer — both marketplaces, approvals, pricing, and dashboards work end-to-end and are verified. The single highest-leverage move is <b>#1 (Prisma/Postgres)</b>: it converts the working demo into a persistent product without touching routes or UI, and unblocks every "resets on restart" caveat at once.
+  </p>
+
+</div>
+</body>
+</html>

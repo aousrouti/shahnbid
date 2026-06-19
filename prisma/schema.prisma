@@ -1,0 +1,257 @@
+// ShahnBid data model — backend phase target.
+//
+// This schema is the design artifact for the persistence layer. The app currently
+// runs against an in-memory data-access layer (lib/server/*-repo.ts) that mirrors
+// these models, so switching to a real database is an internal swap inside the
+// repo files — the API routes and UI don't change.
+//
+// To go live:
+//   1. Provision Postgres (Vercel Postgres / Neon / Supabase) and set DATABASE_URL.
+//   2. npm install
+//   3. npx prisma migrate dev --name init
+//   4. Swap the repo internals from the in-memory maps to PrismaClient.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────── Enums ───────────────────────────────
+
+enum UserRole {
+  CLIENT
+  CARRIER
+  ADMIN
+}
+
+enum ClientType {
+  INDIVIDUAL
+  BUSINESS
+}
+
+enum CarrierStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum JobStatus {
+  DRAFT
+  PUBLISHED
+  ACCEPTED
+  PICKED_UP
+  IN_TRANSIT
+  DELIVERED
+  COMPLETED
+  CANCELLED
+}
+
+enum JobSource {
+  CLIENT_POSTED
+  RETURN_TRIP
+}
+
+enum BidStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum CargoType {
+  GENERAL
+  REFRIGERATED
+  HAZMAT
+  FRAGILE
+  OVERSIZED
+  LIVESTOCK
+}
+
+enum AvailabilityStatus {
+  OPEN
+  BOOKED
+  EXPIRED
+  CANCELLED
+}
+
+enum CommissionPayer {
+  CARRIER
+  CLIENT
+}
+
+// ───────────────────────────── Accounts ──────────────────────────────
+
+model Profile {
+  id           String          @id @default(cuid())
+  role         UserRole
+  email        String          @unique
+  passwordHash String
+  fullName     String
+  phone        String?
+  country      String?
+  city         String?
+  createdAt    DateTime        @default(now())
+
+  client       ClientProfile?
+  carrier      CarrierProfile?
+  jobs         Job[]           @relation("ClientJobs")
+  bids         Bid[]           @relation("CarrierBids")
+  returnTrips  ReturnTrip[]    @relation("CarrierReturns")
+  pushSubs     PushSubscription[]
+  notifications CarrierNotification[]
+
+  @@index([role])
+}
+
+model ClientProfile {
+  id          String     @id @default(cuid())
+  profile     Profile    @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId   String     @unique
+  clientType  ClientType
+  companyName String?    // BUSINESS only
+  ice         String?    // BUSINESS only — Moroccan tax ID (15 digits)
+  address     String?    // BUSINESS only
+}
+
+model CarrierProfile {
+  id              String        @id @default(cuid())
+  profile         Profile       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId       String        @unique
+  companyName     String
+  licenseNumber   String
+  insuranceExpiry DateTime
+  status          CarrierStatus @default(PENDING)
+
+  @@index([status])
+}
+
+// ──────────────────────────── Marketplace ────────────────────────────
+
+model Job {
+  id             String     @id @default(cuid())
+  client         Profile    @relation("ClientJobs", fields: [clientId], references: [id])
+  clientId       String
+  source         JobSource  @default(CLIENT_POSTED)
+  status         JobStatus  @default(PUBLISHED)
+  cargoType      CargoType
+  description    String
+  weightKg       Int
+  fragile        Boolean    @default(false)
+  hazmat         Boolean    @default(false)
+  originCity     String
+  originAddress  String
+  destCity       String
+  destAddress    String
+  pickupDateFrom DateTime
+  pickupDateTo   DateTime?
+  deliveryDate   DateTime
+  notes          String?
+  photoUrls      String[]   @default([])
+
+  // Set when a bid is accepted. Rate is snapshotted so later pricing
+  // changes never rewrite historical earnings.
+  agreedPriceMAD     Int?
+  acceptedBid        Bid?    @relation("AcceptedBid", fields: [acceptedBidId], references: [id])
+  acceptedBidId      String? @unique
+  commissionRateSnap Float?  // commissionRate at the moment of acceptance
+
+  bids      Bid[]    @relation("JobBids")
+  createdAt DateTime @default(now())
+
+  @@index([status])
+  @@index([clientId])
+  @@index([originCity, destCity])
+}
+
+model Bid {
+  id          String    @id @default(cuid())
+  job         Job       @relation("JobBids", fields: [jobId], references: [id], onDelete: Cascade)
+  jobId       String
+  carrier     Profile   @relation("CarrierBids", fields: [carrierId], references: [id])
+  carrierId   String
+  priceMAD    Int
+  etaDays     Int
+  vehicleType String
+  notes       String?
+  status      BidStatus @default(PENDING)
+  createdAt   DateTime  @default(now())
+
+  acceptedFor Job?      @relation("AcceptedBid")
+
+  @@unique([jobId, carrierId]) // one active bid per carrier per job
+  @@index([carrierId])
+  @@index([status])
+}
+
+model ReturnTrip {
+  id             String             @id @default(cuid())
+  carrier        Profile            @relation("CarrierReturns", fields: [carrierId], references: [id])
+  carrierId      String
+  originCity     String
+  destCity       String
+  availableDate  DateTime
+  capacityKg     Int
+  vehicleType    String
+  listedPriceMAD Int
+  notes          String?
+  status         AvailabilityStatus @default(OPEN)
+  createdAt      DateTime           @default(now())
+
+  @@index([status])
+  @@index([originCity, destCity])
+}
+
+// ───────────────────────────── Platform ──────────────────────────────
+
+// Single-row table holding the admin-editable pricing rules.
+model PricingSettings {
+  id               Int             @id @default(1)
+  commissionRate   Float           @default(0.10)
+  minCommissionMAD Int             @default(50)
+  vatRate          Float           @default(0.20)
+  minJobPriceMAD   Int             @default(100)
+  commissionPayer  CommissionPayer @default(CARRIER)
+  updatedBy        String          @default("système")
+  updatedAt        DateTime        @updatedAt
+}
+
+model AdminNotification {
+  id        String   @id @default(cuid())
+  type      String   // NEW_CARRIER | NEW_CLIENT
+  title     String
+  body      String
+  link      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([read])
+}
+
+model CarrierNotification {
+  id        String   @id @default(cuid())
+  carrier   Profile  @relation(fields: [carrierId], references: [id], onDelete: Cascade)
+  carrierId String
+  type      String   // APPROVED | REJECTED | SUSPENDED | REACTIVATED
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([carrierId, read])
+}
+
+model PushSubscription {
+  endpoint  String   @id
+  user      Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}

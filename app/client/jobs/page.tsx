@@ -2,11 +2,15 @@ import Link from 'next/link';
 import PageHeader from '@/components/shared/PageHeader';
 import JobCard from '@/components/jobs/JobCard';
 import EmptyState from '@/components/shared/EmptyState';
-import { mockJobs } from '@/lib/mock-data/jobs';
+import { listJobs } from '@/lib/server/jobs-repo';
+import { getCurrentUser } from '@/lib/auth/current-user';
 import { Plus, Package } from 'lucide-react';
 
-export default function ClientJobsPage() {
-  const jobs = mockJobs;
+export const dynamic = 'force-dynamic';
+
+export default async function ClientJobsPage() {
+  const user = await getCurrentUser();
+  const jobs = user ? listJobs({ clientId: user.id }) : [];
 
   return (
     <div className="space-y-6">

@@ -3,26 +3,43 @@ import KpiCard from '@/components/shared/KpiCard';
 import JobCard from '@/components/jobs/JobCard';
 import PageHeader from '@/components/shared/PageHeader';
 import CarrierMapPanel from '@/components/carrier/CarrierMapPanel';
-import { mockJobs } from '@/lib/mock-data/jobs';
+import CarrierNotifications from '@/components/carrier/CarrierNotifications';
+import { listJobs } from '@/lib/server/jobs-repo';
+import { listBidsForCarrier } from '@/lib/server/bids-repo';
+import { listReturnTrips } from '@/lib/server/returns-repo';
+import { getCurrentUser } from '@/lib/auth/current-user';
 import { mockApprovedCarrier } from '@/lib/mock-data/users';
+import { formatMAD } from '@/lib/utils';
 import { Search, FileText, RotateCcw, DollarSign } from 'lucide-react';
 
-export default function CarrierDashboardPage() {
-  const publishedJobs = mockJobs.filter((j) => j.status === 'PUBLISHED').slice(0, 3);
+export const dynamic = 'force-dynamic';
+
+export default async function CarrierDashboardPage() {
+  const user = await getCurrentUser();
+  const name = user?.fullName ?? mockApprovedCarrier.fullName;
+  const company = user?.companyName ?? mockApprovedCarrier.companyName;
+
+  const publishedJobs = listJobs({ status: 'PUBLISHED' });
+  const myBids    = user ? listBidsForCarrier(user.id) : [];
+  const myReturns = user ? listReturnTrips({ carrierId: user.id }) : [];
+  // Revenue = sum of this carrier's accepted bid prices.
+  const revenue = myBids.filter((b) => b.status === 'ACCEPTED').reduce((s, b) => s + b.priceMAD, 0);
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`Bonjour, ${mockApprovedCarrier.fullName} 👋`}
-        subtitle={mockApprovedCarrier.companyName}
+        title={`Bonjour, ${name} 👋`}
+        subtitle={company}
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard label="Appels d'offres"      value={mockJobs.filter((j) => j.status === 'PUBLISHED').length} icon={Search} />
-        <KpiCard label="Offres soumises"      value={3}        icon={FileText} delta={50} deltaPositive />
-        <KpiCard label="Retours publiés"      value={2}        icon={RotateCcw} />
-        <KpiCard label="Revenus du mois (MAD)" value="12 500" icon={DollarSign} delta={8} deltaPositive />
+        <KpiCard label="Appels d'offres" value={publishedJobs.length} icon={Search} />
+        <KpiCard label="Offres soumises" value={myBids.length}        icon={FileText} />
+        <KpiCard label="Retours publiés" value={myReturns.length}     icon={RotateCcw} />
+        <KpiCard label="Revenus (MAD)"   value={formatMAD(revenue)}   icon={DollarSign} />
       </div>
+
+      <CarrierNotifications />
 
       <div className="rounded-card border border-brand-border bg-white p-4">
         <CarrierMapPanel variant="compact" />
@@ -34,7 +51,7 @@ export default function CarrierDashboardPage() {
           <Link href="/carrier/jobs" className="text-sm text-brand-primary hover:underline">Voir tout</Link>
         </div>
         <div className="space-y-3">
-          {publishedJobs.map((job) => (
+          {publishedJobs.slice(0, 3).map((job) => (
             <JobCard key={job.id} job={job} variant="carrier" href={`/carrier/jobs/${job.id}`} />
           ))}
         </div>

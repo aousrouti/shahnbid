@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { postJobSchema, type PostJobInput } from '@/lib/validations';
@@ -8,13 +10,27 @@ import { MOROCCAN_CITIES, CARGO_TYPE_LABELS } from '@/lib/constants';
 const cargoTypes = Object.entries(CARGO_TYPE_LABELS) as [string, string][];
 
 export default function PostJobForm() {
+  const router = useRouter();
+  const [serverError, setServerError] = useState<string | null>(null);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<PostJobInput>({
     resolver: zodResolver(postJobSchema),
     defaultValues: { fragile: false, hazmat: false },
   });
 
-  function onSubmit(data: PostJobInput) {
-    console.log('Nouvelle expédition:', data);
+  async function onSubmit(data: PostJobInput) {
+    setServerError(null);
+    const res = await fetch('/api/jobs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setServerError(d.error ?? 'Échec de la publication. Réessayez.');
+      return;
+    }
+    const { job } = await res.json();
+    router.push(`/client/jobs/${job.id}`);
   }
 
   const fieldClass = 'w-full border border-gray-300 rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary';
@@ -125,8 +141,12 @@ export default function PostJobForm() {
         </div>
       </div>
 
+      {serverError && (
+        <div className="border border-red-200 bg-red-50 text-red-700 rounded-input px-4 py-3 text-sm">{serverError}</div>
+      )}
+
       <button type="submit" disabled={isSubmitting} className="w-full py-3 bg-brand-primary text-white font-bold rounded-input hover:bg-brand-mid transition-colors disabled:opacity-50 text-base">
-        Publier l&apos;expédition
+        {isSubmitting ? 'Publication…' : "Publier l'expédition"}
       </button>
     </form>
   );

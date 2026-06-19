@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Briefcase, DollarSign } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, DollarSign, SlidersHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const links = [
@@ -10,6 +10,7 @@ const links = [
   { href: '/admin/users',      label: 'Transporteurs',   icon: Users },
   { href: '/admin/jobs',       label: 'Expéditions',     icon: Briefcase },
   { href: '/admin/commission', label: 'Commissions',     icon: DollarSign },
+  { href: '/admin/pricing',    label: 'Tarification',    icon: SlidersHorizontal },
 ];
 
 export default function AdminSidebar() {

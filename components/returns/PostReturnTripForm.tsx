@@ -1,17 +1,32 @@
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { postReturnTripSchema, type PostReturnTripInput } from '@/lib/validations';
 import { MOROCCAN_CITIES, VEHICLE_TYPES } from '@/lib/constants';
 
 export default function PostReturnTripForm() {
+  const router = useRouter();
+  const [serverError, setServerError] = useState<string | null>(null);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<PostReturnTripInput>({
     resolver: zodResolver(postReturnTripSchema),
   });
 
-  function onSubmit(data: PostReturnTripInput) {
-    console.log('Nouveau retour disponible:', data);
+  async function onSubmit(data: PostReturnTripInput) {
+    setServerError(null);
+    const res = await fetch('/api/returns', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setServerError(d.error ?? 'Échec de la publication. Réessayez.');
+      return;
+    }
+    router.push('/carrier/returns');
   }
 
   return (
@@ -68,8 +83,12 @@ export default function PostReturnTripForm() {
         <textarea {...register('notes')} rows={3} placeholder="Informations supplémentaires…" className="w-full border border-gray-300 rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary" />
       </div>
 
+      {serverError && (
+        <div className="border border-red-200 bg-red-50 text-red-700 rounded-input px-4 py-3 text-sm">{serverError}</div>
+      )}
+
       <button type="submit" disabled={isSubmitting} className="w-full py-2.5 bg-brand-primary text-white font-semibold rounded-input hover:bg-brand-mid transition-colors disabled:opacity-50">
-        Publier le retour disponible
+        {isSubmitting ? 'Publication…' : 'Publier le retour disponible'}
       </button>
     </form>
   );

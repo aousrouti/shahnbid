@@ -10,3 +10,6 @@ dist/
 .vs/
 .vscode/*
 !.vscode/extensions.json
+
+# Local tooling (preview launch config)
+.claude/

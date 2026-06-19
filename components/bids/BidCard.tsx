@@ -15,10 +15,12 @@ interface BidCardProps {
   bid: BidWithCarrier;
   isAccepted: boolean;
   onAccept: (bidId: string) => void;
+  onReject?: (bidId: string) => void;
   canAccept: boolean;
+  busy?: boolean;
 }
 
-export default function BidCard({ bid, isAccepted, onAccept, canAccept }: BidCardProps) {
+export default function BidCard({ bid, isAccepted, onAccept, onReject, canAccept, busy }: BidCardProps) {
   const { bg, text, label } = BID_STATUS_STYLES[bid.status];
 
   return (
@@ -56,12 +58,24 @@ export default function BidCard({ bid, isAccepted, onAccept, canAccept }: BidCar
             {label}
           </span>
           {canAccept && bid.status === 'PENDING' && (
-            <button
-              onClick={() => onAccept(bid.id)}
-              className="px-4 py-1.5 bg-brand-primary text-white text-sm font-semibold rounded-input hover:bg-brand-mid transition-colors"
-            >
-              Accepter cette offre
-            </button>
+            <div className="flex items-center gap-2">
+              {onReject && (
+                <button
+                  onClick={() => onReject(bid.id)}
+                  disabled={busy}
+                  className="px-3 py-1.5 border border-gray-300 text-gray-600 text-sm font-medium rounded-input hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  Refuser
+                </button>
+              )}
+              <button
+                onClick={() => onAccept(bid.id)}
+                disabled={busy}
+                className="px-4 py-1.5 bg-brand-primary text-white text-sm font-semibold rounded-input hover:bg-brand-mid transition-colors disabled:opacity-50"
+              >
+                {busy ? '…' : 'Accepter cette offre'}
+              </button>
+            </div>
           )}
         </div>
       </div>

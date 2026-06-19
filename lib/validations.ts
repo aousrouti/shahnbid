@@ -78,8 +78,19 @@ export const postReturnTripSchema = z.object({
   { message: 'Origine et destination identiques', path: ['destCity'] },
 );
 
+// Admin pricing settings. Rates are entered as percentages in the UI and
+// converted to fractions before validation (0–100% → 0–1).
+export const pricingSettingsSchema = z.object({
+  commissionRate:   z.number().min(0, 'Min 0%').max(0.5, 'Max 50%'),
+  minCommissionMAD: z.number().min(0, 'Doit être positif').max(100000),
+  vatRate:          z.number().min(0, 'Min 0%').max(0.3, 'Max 30%'),
+  minJobPriceMAD:   z.number().min(0, 'Doit être positif').max(1000000),
+  commissionPayer:  z.enum(['CARRIER', 'CLIENT']),
+});
+
 export type RegisterClientInput  = z.infer<typeof registerClientSchema>;
 export type RegisterCarrierInput = z.infer<typeof registerCarrierSchema>;
 export type PostJobInput          = z.infer<typeof postJobSchema>;
 export type SubmitBidInput        = z.infer<typeof submitBidSchema>;
 export type PostReturnTripInput   = z.infer<typeof postReturnTripSchema>;
+export type PricingSettingsInput  = z.infer<typeof pricingSettingsSchema>;

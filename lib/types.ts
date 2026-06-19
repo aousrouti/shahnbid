@@ -8,11 +8,33 @@ export type CargoType          = 'GENERAL' | 'REFRIGERATED' | 'HAZMAT' | 'FRAGIL
 export type CarrierStatus      = 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
 export type JobSource          = 'CLIENT_POSTED' | 'RETURN_TRIP';
 export type AvailabilityStatus = 'OPEN' | 'BOOKED' | 'EXPIRED' | 'CANCELLED';
+export type CommissionPayer    = 'CARRIER' | 'CLIENT';   // who bears the platform fee
 
 export interface ApiResponse<T> {
   data?: T;
   error?: string;
   status: number;
+}
+
+/** Platform-wide pricing rules, editable by an admin. */
+export interface PricingSettings {
+  commissionRate: number;        // fraction on agreed price, e.g. 0.10 = 10%
+  minCommissionMAD: number;      // floor applied to the commission
+  vatRate: number;               // TVA on the commission service fee, e.g. 0.20 = 20%
+  minJobPriceMAD: number;        // minimum allowed bid / listing price
+  commissionPayer: CommissionPayer;
+  updatedAt: string;
+  updatedBy: string;             // email of the admin who last changed it
+}
+
+/** Derived breakdown for a single completed shipment. */
+export interface CommissionBreakdown {
+  agreedPriceMAD: number;
+  commissionMAD: number;         // platform fee (rate applied, floor enforced)
+  vatMAD: number;                // TVA on the commission
+  totalFeeMAD: number;           // commission + VAT
+  carrierNetMAD: number;         // what the carrier keeps (if payer = CARRIER)
+  clientTotalMAD: number;        // what the client pays (if payer = CLIENT)
 }
 
 export interface JobSummary {

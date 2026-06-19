@@ -8,9 +8,10 @@ interface ReturnTripCardProps {
   trip: ReturnTrip;
   onBook: (tripId: string) => void;
   canBook: boolean;
+  busy?: boolean;
 }
 
-export default function ReturnTripCard({ trip, onBook, canBook }: ReturnTripCardProps) {
+export default function ReturnTripCard({ trip, onBook, canBook, busy }: ReturnTripCardProps) {
   return (
     <div className="bg-white border border-brand-border rounded-card p-5 flex flex-col sm:flex-row sm:items-center gap-5">
       {/* Left: route + info */}
@@ -53,9 +54,10 @@ export default function ReturnTripCard({ trip, onBook, canBook }: ReturnTripCard
         {canBook && (
           <button
             onClick={() => onBook(trip.id)}
-            className="px-5 py-2 bg-brand-primary text-white text-sm font-semibold rounded-input hover:bg-brand-mid transition-colors"
+            disabled={busy}
+            className="px-5 py-2 bg-brand-primary text-white text-sm font-semibold rounded-input hover:bg-brand-mid transition-colors disabled:opacity-50"
           >
-            Réserver
+            {busy ? 'Réservation…' : 'Réserver'}
           </button>
         )}
       </div>

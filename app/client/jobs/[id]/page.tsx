@@ -1,25 +1,22 @@
-'use client';
-
 import { notFound } from 'next/navigation';
 import StatusBadge from '@/components/jobs/StatusBadge';
-import BidCard from '@/components/bids/BidCard';
-import EmptyState from '@/components/shared/EmptyState';
-import { mockJobDetails } from '@/lib/mock-data/jobs';
-import { mockBids } from '@/lib/mock-data/bids';
+import JobBidsList from '@/components/bids/JobBidsList';
+import { getJobDetail, getJobOwner } from '@/lib/server/jobs-repo';
+import { getCurrentUser } from '@/lib/auth/current-user';
 import { formatDate, formatWeight, formatMAD, clientDisplayName } from '@/lib/utils';
 import { CARGO_TYPE_LABELS, CLIENT_TYPE_LABELS } from '@/lib/constants';
 import { MapPin, Package, Calendar, Phone, Building2, User } from 'lucide-react';
 import Link from 'next/link';
 
-export default function ClientJobDetailPage({ params }: { params: { id: string } }) {
-  const job = mockJobDetails[params.id] ?? {
-    ...Object.values(mockJobDetails)[0],
-    id: params.id,
-  };
+export const dynamic = 'force-dynamic';
 
+export default async function ClientJobDetailPage({ params }: { params: { id: string } }) {
+  const user = await getCurrentUser();
+  const job  = getJobDetail(params.id);
   if (!job) notFound();
 
-  const bids = params.id === 'job-001' ? mockBids : [];
+  // Only the owning client (or admin) may view a job's bids.
+  if (user?.role === 'CLIENT' && getJobOwner(params.id) !== user.id) notFound();
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -82,26 +79,11 @@ export default function ClientJobDetailPage({ params }: { params: { id: string }
       </div>
 
       {/* Bids */}
-      <div>
-        <h2 className="font-semibold text-brand-navy mb-4">
-          Offres reçues ({bids.length})
-        </h2>
-        {bids.length === 0 ? (
-          <EmptyState title="Aucune offre pour le moment" body="Les transporteurs approuvés peuvent soumettre des offres sur cette expédition." />
-        ) : (
-          <div className="space-y-3">
-            {bids.map((bid) => (
-              <BidCard
-                key={bid.id}
-                bid={bid}
-                isAccepted={bid.id === job.acceptedBidId}
-                onAccept={(bidId) => console.log('Accepter offre (mock):', bidId)}
-                canAccept={job.status === 'PUBLISHED'}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      <JobBidsList
+        bids={job.bids}
+        acceptedBidId={job.acceptedBidId}
+        canAct={job.status === 'PUBLISHED'}
+      />
     </div>
   );
 }
