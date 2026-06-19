@@ -2,7 +2,9 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import StatusBadge from '@/components/jobs/StatusBadge';
 import BidForm from '@/components/bids/BidForm';
+import JobStatusActions from '@/components/jobs/JobStatusActions';
 import { getJobDetail } from '@/lib/server/jobs-repo';
+import { getAcceptedCarrierId } from '@/lib/server/bids-repo';
 import { formatDate, formatWeight } from '@/lib/utils';
 import { CARGO_TYPE_LABELS } from '@/lib/constants';
 import { MapPin, Package, Calendar } from 'lucide-react';
@@ -16,6 +18,7 @@ export default async function CarrierJobDetailPage({ params }: { params: { id: s
   if (!job) notFound();
 
   const alreadyBid = !!user && job.bids.some((b) => b.carrier.id === user.id && b.status === 'PENDING');
+  const isAssigned = !!user && getAcceptedCarrierId(params.id) === user.id;
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -59,6 +62,11 @@ export default async function CarrierJobDetailPage({ params }: { params: { id: s
       {/* Bid form — visible to all carriers, but locked until APPROVED */}
       {job.status === 'PUBLISHED' && (
         <BidForm jobId={params.id} carrierStatus={user?.status} alreadyBid={alreadyBid} />
+      )}
+
+      {/* Lifecycle controls — only the assigned carrier, once the job is in progress */}
+      {isAssigned && job.status !== 'PUBLISHED' && (
+        <JobStatusActions jobId={params.id} status={job.status} actor="carrier" />
       )}
     </div>
   );

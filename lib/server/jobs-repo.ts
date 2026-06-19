@@ -2,6 +2,7 @@
 // currently reads/writes the in-memory db. Backend phase: swap bodies to
 // prisma.job.* — signatures stay identical.
 import { db, type StoredJob } from './marketplace-db';
+import { getPricingSettings, commissionAmount } from '@/lib/pricing/store';
 import type { JobSummary, JobDetail, JobStatus, PostJobPayload, ClientType } from '@/lib/types';
 
 function bidCountFor(jobId: string): number {
@@ -25,6 +26,8 @@ function toSummary(j: StoredJob): JobSummary {
     deliveryDate: j.deliveryDate,
     bidCount: bidCountFor(j.id),
     agreedPriceMAD: j.agreedPriceMAD,
+    commissionRateSnap: j.commissionRateSnap,
+    commissionCapturedMAD: j.commissionCapturedMAD,
     createdAt: j.createdAt,
   };
 }
@@ -96,11 +99,48 @@ export function createJob(input: CreateJobInput, id: string, createdAt: string):
   return toSummary(job);
 }
 
-/** Internal: set status (+ optional agreed price / accepted bid) during accept. */
+/** Internal: set status + agreed price during accept, and snapshot the commission rate. */
 export function setJobAccepted(jobId: string, acceptedBidId: string, agreedPriceMAD: number): void {
   const j = db.jobs.get(jobId);
   if (!j) return;
   j.status = 'ACCEPTED';
   j.acceptedBidId = acceptedBidId;
   j.agreedPriceMAD = agreedPriceMAD;
+  // Lock the commission rate at acceptance so later pricing changes never rewrite history.
+  j.commissionRateSnap = getPricingSettings().commissionRate;
+}
+
+// Linear shipment lifecycle. Each status advances to exactly one next status.
+const NEXT_STATUS: Partial<Record<JobStatus, JobStatus>> = {
+  ACCEPTED:   'PICKED_UP',
+  PICKED_UP:  'IN_TRANSIT',
+  IN_TRANSIT: 'DELIVERED',
+  DELIVERED:  'COMPLETED',
+};
+
+/** The status a job in `current` is allowed to move to next (null if terminal). */
+export function nextStatus(current: JobStatus): JobStatus | null {
+  return NEXT_STATUS[current] ?? null;
+}
+
+export type AdvanceResult =
+  | { ok: true; job: JobSummary }
+  | { ok: false; reason: 'NOT_FOUND' | 'INVALID_TRANSITION' };
+
+/**
+ * Advance a job to `target`, which must be the legal next status.
+ * On COMPLETED, commission is captured using the rate snapshotted at acceptance.
+ */
+export function advanceJobStatus(jobId: string, target: JobStatus): AdvanceResult {
+  const j = db.jobs.get(jobId);
+  if (!j) return { ok: false, reason: 'NOT_FOUND' };
+  if (NEXT_STATUS[j.status] !== target) return { ok: false, reason: 'INVALID_TRANSITION' };
+
+  j.status = target;
+  if (target === 'COMPLETED') {
+    const s = getPricingSettings();
+    const rate = j.commissionRateSnap ?? s.commissionRate;
+    j.commissionCapturedMAD = commissionAmount(j.agreedPriceMAD ?? 0, { ...s, commissionRate: rate });
+  }
+  return { ok: true, job: toSummary(j) };
 }

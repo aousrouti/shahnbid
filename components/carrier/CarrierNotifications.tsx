@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Bell, CheckCircle, XCircle, PauseCircle, RotateCcw } from 'lucide-react';
+import { Bell, CheckCircle, XCircle, PauseCircle, RotateCcw, Truck } from 'lucide-react';
 
-type NotifType = 'APPROVED' | 'REJECTED' | 'SUSPENDED' | 'REACTIVATED';
+type NotifType = 'APPROVED' | 'REJECTED' | 'SUSPENDED' | 'REACTIVATED' | 'JOB_UPDATE';
 
 interface CarrierNotification {
   id: string;
@@ -19,6 +19,7 @@ const TYPE_CONFIG: Record<NotifType, { icon: typeof Bell; iconCls: string; dot: 
   REJECTED:    { icon: XCircle,     iconCls: 'text-red-700 bg-red-100',       dot: 'bg-red-500' },
   SUSPENDED:   { icon: PauseCircle, iconCls: 'text-gray-600 bg-gray-200',     dot: 'bg-gray-400' },
   REACTIVATED: { icon: RotateCcw,   iconCls: 'text-brand-primary bg-blue-100', dot: 'bg-brand-primary' },
+  JOB_UPDATE:  { icon: Truck,       iconCls: 'text-emerald-700 bg-emerald-100', dot: 'bg-emerald-500' },
 };
 
 function formatTime(iso: string) {

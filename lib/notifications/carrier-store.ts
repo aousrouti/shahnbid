@@ -1,7 +1,7 @@
 // In-memory per-carrier notification store (UX/scaffolding phase).
 // Backend phase: persist to a `carrier_notifications` table.
 
-export type CarrierNotifType = 'APPROVED' | 'REJECTED' | 'SUSPENDED' | 'REACTIVATED';
+export type CarrierNotifType = 'APPROVED' | 'REJECTED' | 'SUSPENDED' | 'REACTIVATED' | 'JOB_UPDATE';
 
 export interface CarrierNotification {
   id: string;

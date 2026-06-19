@@ -1,15 +1,21 @@
 import Link from 'next/link';
 import PageHeader from '@/components/shared/PageHeader';
 import KpiCard from '@/components/shared/KpiCard';
-import { mockJobs } from '@/lib/mock-data/jobs';
+import { listJobs } from '@/lib/server/jobs-repo';
 import { formatDate, formatMAD } from '@/lib/utils';
 import { getPricingSettings, commissionBreakdown } from '@/lib/pricing/store';
 import { DollarSign, MapPin, Receipt, SlidersHorizontal } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default function AdminCommissionPage() {
   const pricing = getPricingSettings();
-  const completedJobs = mockJobs.filter((j) => j.status === 'COMPLETED' && j.agreedPriceMAD);
-  const rows = completedJobs.map((j) => ({ job: j, b: commissionBreakdown(j.agreedPriceMAD!, pricing) }));
+  const completedJobs = listJobs({ status: 'COMPLETED' }).filter((j) => j.agreedPriceMAD);
+  // Use the rate snapshotted at acceptance per job, so past pricing changes don't rewrite history.
+  const rows = completedJobs.map((j) => ({
+    job: j,
+    b: commissionBreakdown(j.agreedPriceMAD!, { ...pricing, commissionRate: j.commissionRateSnap ?? pricing.commissionRate }),
+  }));
 
   const totalCommission = rows.reduce((s, r) => s + r.b.commissionMAD, 0);
   const totalVat        = rows.reduce((s, r) => s + r.b.vatMAD, 0);

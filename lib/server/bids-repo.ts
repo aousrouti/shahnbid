@@ -26,6 +26,12 @@ export function getBid(id: string): StoredBid | null {
   return db.bids.get(id) ?? null;
 }
 
+/** The carrier whose bid was accepted on a job (the assigned carrier), if any. */
+export function getAcceptedCarrierId(jobId: string): string | null {
+  const bid = Array.from(db.bids.values()).find((b) => b.jobId === jobId && b.status === 'ACCEPTED');
+  return bid?.carrier.id ?? null;
+}
+
 /** Has this carrier already bid on this job (active bid)? */
 export function carrierHasActiveBid(jobId: string, carrierId: string): boolean {
   return Array.from(db.bids.values()).some(

@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import StatusBadge from '@/components/jobs/StatusBadge';
 import JobBidsList from '@/components/bids/JobBidsList';
+import JobStatusActions from '@/components/jobs/JobStatusActions';
 import { getJobDetail, getJobOwner } from '@/lib/server/jobs-repo';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { formatDate, formatWeight, formatMAD, clientDisplayName } from '@/lib/utils';
@@ -77,6 +78,9 @@ export default async function ClientJobDetailPage({ params }: { params: { id: st
           <span>{job.client.phone}</span>
         </div>
       </div>
+
+      {/* Shipment tracking (self-hides until the job is accepted) */}
+      <JobStatusActions jobId={params.id} status={job.status} actor="client" />
 
       {/* Bids */}
       <JobBidsList

@@ -49,6 +49,8 @@ export interface JobSummary {
   deliveryDate: string;
   bidCount: number;
   agreedPriceMAD?: number;
+  commissionRateSnap?: number;     // rate locked in at bid acceptance
+  commissionCapturedMAD?: number;  // realized when the job reaches COMPLETED
   createdAt: string;
 }
 
