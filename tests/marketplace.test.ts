@@ -87,11 +87,17 @@ dbDescribe('marketplace (SQL Server)', () => {
       { carrierId: CARRIER, originCity: 'Rabat', destCity: 'Fès', availableDate: '2026-08-10', capacityKg: 5000, vehicleType: 'Camion 7.5T', listedPriceMAD: 2500 },
       `rt-${sfx}`,
     );
-    const first = await bookReturnTrip(`rt-${sfx}`);
+    const first = await bookReturnTrip(`rt-${sfx}`, CLIENT);
     expect(first.ok).toBe(true);
-    if (first.ok) expect(first.trip.status).toBe('BOOKED');
+    if (first.ok) {
+      expect(first.trip.status).toBe('BOOKED');
+      // Booking creates a tracked RETURN_TRIP shipment for the client.
+      const job = await getJobDetail(first.jobId);
+      expect(job?.source).toBe('RETURN_TRIP');
+      expect(job?.status).toBe('ACCEPTED');
+    }
 
-    const second = await bookReturnTrip(`rt-${sfx}`);
+    const second = await bookReturnTrip(`rt-${sfx}`, CLIENT);
     expect(second.ok).toBe(false);
   });
 });

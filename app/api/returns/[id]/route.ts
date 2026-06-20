@@ -33,7 +33,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (user.role !== 'CLIENT') {
     return NextResponse.json({ error: 'Seuls les chargeurs peuvent réserver un retour' }, { status: 403 });
   }
-  const result = await bookReturnTrip(params.id);
+  const result = await bookReturnTrip(params.id, user.id);
   if (!result.ok) {
     const status = result.reason === 'NOT_FOUND' ? 404 : 409;
     const error = result.reason === 'NOT_FOUND' ? 'Retour introuvable' : "Ce retour n'est plus disponible";

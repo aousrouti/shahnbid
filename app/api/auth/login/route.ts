@@ -1,10 +1,19 @@
 import { NextResponse } from 'next/server';
 import { findByCredentials } from '@/lib/demo-data/accounts';
 import { SESSION_COOKIE, createToken, dashboardFor } from '@/lib/auth/session';
+import { rateLimit, clientIp } from '@/lib/server/rate-limit';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
+  const rl = rateLimit(`login:${clientIp(req)}`, 10, 60_000);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: 'Trop de tentatives. Réessayez dans un instant.' },
+      { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } },
+    );
+  }
+
   const body = await req.json().catch(() => ({}));
   const email = typeof body?.email === 'string' ? body.email : '';
   const password = typeof body?.password === 'string' ? body.password : '';

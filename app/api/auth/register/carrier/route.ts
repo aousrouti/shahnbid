@@ -3,10 +3,19 @@ import { registerCarrierSchema } from '@/lib/validations';
 import { addAccount, emailExists } from '@/lib/demo-data/accounts';
 import { SESSION_COOKIE, createToken } from '@/lib/auth/session';
 import { addAdminNotification } from '@/lib/notifications/store';
+import { rateLimit, clientIp } from '@/lib/server/rate-limit';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
+  const rl = rateLimit(`register:${clientIp(req)}`, 5, 60_000);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: 'Trop de tentatives. Réessayez dans un instant.' },
+      { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } },
+    );
+  }
+
   const body = await req.json().catch(() => null);
   const parsed = registerCarrierSchema.safeParse(body);
   if (!parsed.success) {
