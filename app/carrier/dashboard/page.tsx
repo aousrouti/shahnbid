@@ -3,7 +3,6 @@ import KpiCard from '@/components/shared/KpiCard';
 import JobCard from '@/components/jobs/JobCard';
 import PageHeader from '@/components/shared/PageHeader';
 import CarrierMapPanel from '@/components/carrier/CarrierMapPanel';
-import NotificationsFeed from '@/components/shared/NotificationsFeed';
 import { listJobs } from '@/lib/server/jobs-repo';
 import { listBidsForCarrier } from '@/lib/server/bids-repo';
 import { listReturnTrips } from '@/lib/server/returns-repo';
@@ -38,8 +37,6 @@ export default async function CarrierDashboardPage() {
         <KpiCard label="Retours publiés" value={myReturns.length}     icon={RotateCcw} />
         <KpiCard label="Revenus (MAD)"   value={formatMAD(revenue)}   icon={DollarSign} />
       </div>
-
-      <NotificationsFeed />
 
       <div className="rounded-card border border-brand-border bg-white p-4">
         <CarrierMapPanel variant="compact" />

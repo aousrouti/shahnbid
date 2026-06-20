@@ -4,7 +4,7 @@ import { getJobDetail, getJobOwner } from '@/lib/server/jobs-repo';
 import { listBidsForJob, submitBid, carrierHasActiveBid } from '@/lib/server/bids-repo';
 import { submitBidSchema } from '@/lib/validations';
 import { getPricingSettings } from '@/lib/pricing/store';
-import { addUserNotification } from '@/lib/notifications/user-store';
+import { notifyUser } from '@/lib/notifications/notify';
 import { addAdminNotification } from '@/lib/notifications/store';
 
 export const runtime = 'nodejs';
@@ -80,7 +80,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const route = `${job.originCity} → ${job.destCity}`;
   const owner = await getJobOwner(params.id);
   if (owner) {
-    await addUserNotification(owner, {
+    await notifyUser(owner, {
       type: 'NEW_BID',
       title: 'Nouvelle offre reçue',
       body: `${user.companyName ?? user.fullName} a proposé ${bid.priceMAD} MAD pour ${route}.`,

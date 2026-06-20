@@ -2,7 +2,6 @@ import Link from 'next/link';
 import KpiCard from '@/components/shared/KpiCard';
 import JobCard from '@/components/jobs/JobCard';
 import PageHeader from '@/components/shared/PageHeader';
-import NotificationsFeed from '@/components/shared/NotificationsFeed';
 import { listJobs } from '@/lib/server/jobs-repo';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { mockClientProfile } from '@/lib/mock-data/users';
@@ -44,8 +43,6 @@ export default async function ClientDashboardPage() {
         <KpiCard label="Terminées"           value={completedCount}        icon={CheckCircle} />
         <KpiCard label="Total dépensé (MAD)" value={formatMAD(totalSpent)} icon={DollarSign} />
       </div>
-
-      <NotificationsFeed />
 
       {/* Recent jobs */}
       <div>

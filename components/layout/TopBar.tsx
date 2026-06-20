@@ -1,19 +1,18 @@
-import { Bell } from 'lucide-react';
 import LogoutButton from './LogoutButton';
+import NotificationBell from './NotificationBell';
 
 interface TopBarProps {
   userName: string;
   role: string;
+  notifScope?: 'user' | 'admin';
 }
 
-export default function TopBar({ userName, role }: TopBarProps) {
+export default function TopBar({ userName, role, notifScope = 'user' }: TopBarProps) {
   return (
     <header className="h-14 bg-white border-b border-brand-border flex items-center justify-between px-6">
       <div />
       <div className="flex items-center gap-4">
-        <button className="relative p-1.5 text-gray-500 hover:text-brand-primary transition-colors">
-          <Bell size={18} />
-        </button>
+        <NotificationBell scope={notifScope} />
         <div className="flex items-center gap-2 text-sm">
           <div className="w-7 h-7 rounded-full bg-brand-primary flex items-center justify-center text-white text-xs font-bold">
             {userName.charAt(0).toUpperCase()}

@@ -2,11 +2,9 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { getBid, acceptBid, setBidStatus } from '@/lib/server/bids-repo';
 import { getJobOwner } from '@/lib/server/jobs-repo';
-import { getAccountById } from '@/lib/demo-data/accounts';
-import { sendEmail } from '@/lib/email';
 import { getPayments } from '@/lib/payments';
 import { setJobPayment } from '@/lib/server/jobs-repo';
-import { addUserNotification } from '@/lib/notifications/user-store';
+import { notifyUser } from '@/lib/notifications/notify';
 
 export const runtime = 'nodejs';
 
@@ -66,19 +64,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   } catch (e) {
     console.error('[payments] authorize failed:', e);
   }
-  await addUserNotification(result.bid.carrier.id, {
+  await notifyUser(result.bid.carrier.id, {
     type: 'BID_ACCEPTED',
     title: 'Offre acceptée ✓',
-    body: `Votre offre de ${result.bid.priceMAD} MAD a été acceptée. Vous pouvez démarrer la livraison.`,
+    body: `Votre offre de ${result.bid.priceMAD} MAD a été acceptée. Vous pouvez démarrer la livraison et mettre à jour le statut depuis votre espace.`,
   }, new Date().toISOString());
-  const carrier = await getAccountById(result.bid.carrier.id);
-  if (carrier) {
-    await sendEmail({
-      to: carrier.email,
-      subject: 'ShahnBid — votre offre a été acceptée',
-      text: `Bonjour ${carrier.fullName},\n\nVotre offre de ${result.bid.priceMAD} MAD a été acceptée. Vous pouvez démarrer la livraison et mettre à jour le statut depuis votre espace.\n\n— L'équipe ShahnBid`,
-    });
-  }
 
   return NextResponse.json({ ok: true, bid: result.bid });
 }
