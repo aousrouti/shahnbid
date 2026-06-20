@@ -1,15 +1,18 @@
 import KpiCard from '@/components/shared/KpiCard';
 import PageHeader from '@/components/shared/PageHeader';
 import AdminNotifications from '@/components/admin/AdminNotifications';
+import EmailTester from '@/components/admin/EmailTester';
 import { listJobs } from '@/lib/server/jobs-repo';
 import { listCarriers } from '@/lib/demo-data/accounts';
 import { getPricingSettings, commissionAmount } from '@/lib/pricing/store';
+import { getCurrentUser } from '@/lib/auth/current-user';
 import { formatMAD } from '@/lib/utils';
 import { Users, Briefcase, DollarSign, Clock } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboardPage() {
+  const user            = await getCurrentUser();
   const pricing         = await getPricingSettings();
   const carriers        = await listCarriers();
   const jobs            = await listJobs();
@@ -29,6 +32,8 @@ export default async function AdminDashboardPage() {
       </div>
 
       <AdminNotifications />
+
+      <EmailTester defaultTo={user?.email ?? ''} />
 
       {/* Quick stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
