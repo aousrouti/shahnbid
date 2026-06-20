@@ -14,8 +14,8 @@ export async function POST(req: Request) {
   if (!sub?.endpoint || !sub?.keys?.p256dh || !sub?.keys?.auth) {
     return NextResponse.json({ error: 'Subscription invalide' }, { status: 400 });
   }
-  saveSubscription(user.id, sub);
-  return NextResponse.json({ ok: true, count: subscriptionCount() });
+  await saveSubscription(user.id, sub);
+  return NextResponse.json({ ok: true, count: await subscriptionCount() });
 }
 
 // Remove a subscription (on opt-out).
@@ -25,6 +25,6 @@ export async function DELETE(req: Request) {
   if (!endpoint) {
     return NextResponse.json({ error: 'endpoint requis' }, { status: 400 });
   }
-  removeSubscription(endpoint);
-  return NextResponse.json({ ok: true, count: subscriptionCount() });
+  await removeSubscription(endpoint);
+  return NextResponse.json({ ok: true, count: await subscriptionCount() });
 }

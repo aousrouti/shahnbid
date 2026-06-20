@@ -19,9 +19,9 @@ export default async function CarrierDashboardPage() {
   const name = user?.fullName ?? mockApprovedCarrier.fullName;
   const company = user?.companyName ?? mockApprovedCarrier.companyName;
 
-  const publishedJobs = listJobs({ status: 'PUBLISHED' });
-  const myBids    = user ? listBidsForCarrier(user.id) : [];
-  const myReturns = user ? listReturnTrips({ carrierId: user.id }) : [];
+  const publishedJobs = await listJobs({ status: 'PUBLISHED' });
+  const myBids    = user ? await listBidsForCarrier(user.id) : [];
+  const myReturns = user ? await listReturnTrips({ carrierId: user.id }) : [];
   // Revenue = sum of this carrier's accepted bid prices.
   const revenue = myBids.filter((b) => b.status === 'ACCEPTED').reduce((s, b) => s + b.priceMAD, 0);
 

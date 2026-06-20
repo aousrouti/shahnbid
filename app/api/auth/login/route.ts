@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   const email = typeof body?.email === 'string' ? body.email : '';
   const password = typeof body?.password === 'string' ? body.password : '';
 
-  const account = findByCredentials(email, password);
+  const account = await findByCredentials(email, password);
   if (!account) {
     return NextResponse.json({ error: 'Email ou mot de passe incorrect.' }, { status: 401 });
   }

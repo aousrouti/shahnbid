@@ -1,11 +1,9 @@
-// Runtime account store, seeded from accounts.json. Supports in-session
-// registration (new accounts persist in memory for the running server).
-// Passwords are stored hashed (scrypt); the JSON seed holds plaintext demo
-// credentials which are hashed on load.
-// Backend phase: replace with the Profile/ClientProfile/CarrierProfile tables.
-import seed from './accounts.json';
+// Account store, backed by SQL Server via Prisma (Profile table).
+// Passwords are stored hashed (scrypt). Demo accounts are inserted by the seed.
+import { prisma } from '@/lib/prisma';
 import { hashPassword, verifyPassword } from '@/lib/auth/password';
 import type { UserRole, ClientType, CarrierStatus } from '@/lib/types';
+import type { Profile } from '@prisma/client';
 
 export interface DemoAccount {
   id: string;
@@ -28,72 +26,84 @@ export interface DemoAccount {
 
 export type PublicAccount = Omit<DemoAccount, 'passwordHash'>;
 
-// Shape used when creating an account: plaintext password in, hashed on store.
 type NewAccount = Omit<DemoAccount, 'id' | 'passwordHash'> & { password: string };
 
-// JSON seed carries a plaintext `password`; hash it into `passwordHash` on load.
-interface SeedAccount extends Omit<DemoAccount, 'passwordHash'> { password: string }
-
-function seedStore(): Map<string, DemoAccount> {
-  return new Map(
-    (seed.accounts as SeedAccount[]).map((a) => {
-      const { password, ...rest } = a;
-      return [a.id, { ...rest, passwordHash: hashPassword(password) }];
-    }),
-  );
+function toPublic(p: Profile): PublicAccount {
+  return {
+    id: p.id,
+    role: p.role as UserRole,
+    email: p.email,
+    fullName: p.fullName,
+    phone: p.phone ?? undefined,
+    clientType: (p.clientType as ClientType) ?? undefined,
+    companyName: p.companyName ?? undefined,
+    ice: p.ice ?? undefined,
+    address: p.address ?? undefined,
+    country: p.country ?? undefined,
+    city: p.city ?? undefined,
+    status: (p.status as CarrierStatus) ?? undefined,
+    licenseNumber: p.licenseNumber ?? undefined,
+    insuranceExpiry: p.insuranceExpiry ?? undefined,
+    createdAt: p.createdAt.toISOString(),
+  };
 }
 
-// Survive Next dev HMR by stashing the store on globalThis.
-const g = globalThis as unknown as { __shahnbidAccounts?: Map<string, DemoAccount> };
-const store: Map<string, DemoAccount> = g.__shahnbidAccounts ?? (g.__shahnbidAccounts = seedStore());
-
-function sanitize(a: DemoAccount): PublicAccount {
-  const { passwordHash: _ph, ...rest } = a;
-  return rest;
+export async function findByCredentials(email: string, password: string): Promise<PublicAccount | null> {
+  const p = await prisma.profile.findFirst({ where: { email: email.trim() } });
+  if (!p || !verifyPassword(password, p.passwordHash)) return null;
+  return toPublic(p);
 }
 
-export function findByCredentials(email: string, password: string): PublicAccount | null {
-  const e = email.trim().toLowerCase();
-  for (const a of Array.from(store.values())) {
-    if (a.email.toLowerCase() === e && verifyPassword(password, a.passwordHash)) return sanitize(a);
-  }
-  return null;
+export async function getAccountById(id: string): Promise<PublicAccount | null> {
+  const p = await prisma.profile.findUnique({ where: { id } });
+  return p ? toPublic(p) : null;
 }
 
-export function getAccountById(id: string): PublicAccount | null {
-  const a = store.get(id);
-  return a ? sanitize(a) : null;
+export async function emailExists(email: string): Promise<boolean> {
+  return (await prisma.profile.count({ where: { email: email.trim() } })) > 0;
 }
 
-export function emailExists(email: string): boolean {
-  const e = email.trim().toLowerCase();
-  for (const a of Array.from(store.values())) if (a.email.toLowerCase() === e) return true;
-  return false;
-}
-
-/** Create a new in-session account (plaintext password is hashed before storing). */
-export function addAccount(input: NewAccount): PublicAccount {
-  const id = `${input.role.toLowerCase()}-${crypto.randomUUID().slice(0, 8)}`;
+/** Create an account (plaintext password is hashed before storing). */
+export async function addAccount(input: NewAccount): Promise<PublicAccount> {
   const { password, ...rest } = input;
-  const account: DemoAccount = { ...rest, id, passwordHash: hashPassword(password) };
-  store.set(id, account);
-  return sanitize(account);
+  const id = `${input.role.toLowerCase()}-${crypto.randomUUID().slice(0, 8)}`;
+  const p = await prisma.profile.create({
+    data: {
+      id,
+      role: rest.role,
+      email: rest.email.trim(),
+      passwordHash: hashPassword(password),
+      fullName: rest.fullName,
+      phone: rest.phone,
+      clientType: rest.clientType,
+      companyName: rest.companyName,
+      ice: rest.ice,
+      address: rest.address,
+      country: rest.country,
+      city: rest.city,
+      status: rest.status,
+      licenseNumber: rest.licenseNumber,
+      insuranceExpiry: rest.insuranceExpiry,
+    },
+  });
+  return toPublic(p);
 }
 
 /** All carrier accounts, PENDING first, then newest. */
-export function listCarriers(): PublicAccount[] {
+export async function listCarriers(): Promise<PublicAccount[]> {
   const rank: Record<string, number> = { PENDING: 0, APPROVED: 1, SUSPENDED: 2, REJECTED: 3 };
-  return Array.from(store.values())
-    .filter((a) => a.role === 'CARRIER')
-    .sort((a, b) => (rank[a.status ?? 'PENDING'] - rank[b.status ?? 'PENDING'])
-      || (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
-    .map(sanitize);
+  const rows = await prisma.profile.findMany({ where: { role: 'CARRIER' } });
+  return rows
+    .sort((a, b) =>
+      (rank[a.status ?? 'PENDING'] - rank[b.status ?? 'PENDING']) ||
+      b.createdAt.getTime() - a.createdAt.getTime())
+    .map(toPublic);
 }
 
 /** Update a carrier's approval status. Returns the updated account or null. */
-export function setCarrierStatus(id: string, status: CarrierStatus): PublicAccount | null {
-  const a = store.get(id);
-  if (!a || a.role !== 'CARRIER') return null;
-  a.status = status;
-  return sanitize(a);
+export async function setCarrierStatus(id: string, status: CarrierStatus): Promise<PublicAccount | null> {
+  const existing = await prisma.profile.findUnique({ where: { id } });
+  if (!existing || existing.role !== 'CARRIER') return null;
+  const p = await prisma.profile.update({ where: { id }, data: { status } });
+  return toPublic(p);
 }

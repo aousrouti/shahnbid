@@ -13,11 +13,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Données invalides' }, { status: 400 });
   }
   const d = parsed.data;
-  if (emailExists(d.email)) {
+  if (await emailExists(d.email)) {
     return NextResponse.json({ error: 'Un compte existe déjà avec cet email.' }, { status: 409 });
   }
 
-  const account = addAccount({
+  const account = await addAccount({
     role: 'CLIENT',
     email: d.email,
     password: d.password,
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     city: d.city,
   });
 
-  addAdminNotification({
+  await addAdminNotification({
     type: 'NEW_CLIENT',
     title: 'Nouveau chargeur inscrit',
     body: `${account.companyName || account.fullName} — ${d.city}, ${d.country}`,

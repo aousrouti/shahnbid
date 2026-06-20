@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function ClientJobsPage() {
   const user = await getCurrentUser();
-  const jobs = user ? listJobs({ clientId: user.id }) : [];
+  const jobs = user ? await listJobs({ clientId: user.id }) : [];
 
   return (
     <div className="space-y-6">

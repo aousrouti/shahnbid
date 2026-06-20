@@ -1,14 +1,17 @@
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/jobs/StatusBadge';
-import { mockJobs } from '@/lib/mock-data/jobs';
+import { listJobs } from '@/lib/server/jobs-repo';
 import { formatDate, formatWeight, formatMAD } from '@/lib/utils';
 import { CARGO_TYPE_LABELS } from '@/lib/constants';
 import { MapPin } from 'lucide-react';
 
-export default function AdminJobsPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function AdminJobsPage() {
+  const jobs = await listJobs();
   return (
     <div className="space-y-6">
-      <PageHeader title="Toutes les expéditions" subtitle={`${mockJobs.length} expéditions`} />
+      <PageHeader title="Toutes les expéditions" subtitle={`${jobs.length} expéditions`} />
 
       <div className="bg-white border border-brand-border rounded-card overflow-hidden">
         <table className="w-full text-sm">
@@ -23,7 +26,7 @@ export default function AdminJobsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-brand-border">
-            {mockJobs.map((job) => (
+            {jobs.map((job) => (
               <tr key={job.id} className="hover:bg-brand-bg transition-colors">
                 <td className="px-5 py-3 font-medium text-brand-navy">
                   <span className="flex items-center gap-1">

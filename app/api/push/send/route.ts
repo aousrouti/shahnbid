@@ -27,20 +27,21 @@ export async function POST(req: Request) {
 
   let sent = 0;
   let removed = 0;
+  const subs = await allSubscriptions();
   await Promise.all(
-    allSubscriptions().map(async (s) => {
+    subs.map(async (s) => {
       try {
         await webpush.sendNotification(s, payload);
         sent++;
       } catch (err: unknown) {
         const code = (err as { statusCode?: number })?.statusCode;
         if (code === 404 || code === 410) {
-          removeSubscription(s.endpoint);
+          await removeSubscription(s.endpoint);
           removed++;
         }
       }
     }),
   );
 
-  return NextResponse.json({ ok: true, sent, removed, remaining: subscriptionCount() });
+  return NextResponse.json({ ok: true, sent, removed, remaining: await subscriptionCount() });
 }

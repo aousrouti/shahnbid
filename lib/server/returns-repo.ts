@@ -1,11 +1,23 @@
-// Return-trip data-access layer. Backend phase: swap bodies to prisma.returnTrip.*
-// — signatures stay identical.
-import { db, type StoredReturnTrip } from './marketplace-db';
+// Return-trip data-access layer, backed by SQL Server via Prisma.
+import { prisma } from '@/lib/prisma';
 import type { ReturnTrip, PostReturnTripPayload, AvailabilityStatus } from '@/lib/types';
+import type { ReturnTrip as ReturnTripRow, Profile } from '@prisma/client';
 
-function strip(t: StoredReturnTrip): ReturnTrip {
-  const { createdAt: _c, ...rest } = t;
-  return rest;
+function mapTrip(t: ReturnTripRow & { carrier: Profile }): ReturnTrip {
+  return {
+    id: t.id,
+    carrierId: t.carrierId,
+    carrierName: t.carrier.companyName ?? t.carrier.fullName,
+    carrierCity: t.carrier.city ?? '',
+    originCity: t.originCity,
+    destCity: t.destCity,
+    availableDate: t.availableDate.toISOString(),
+    capacityKg: t.capacityKg,
+    vehicleType: t.vehicleType,
+    listedPriceMAD: t.listedPriceMAD,
+    notes: t.notes ?? undefined,
+    status: t.status as AvailabilityStatus,
+  };
 }
 
 export interface ReturnFilter {
@@ -15,47 +27,46 @@ export interface ReturnFilter {
   carrierId?: string;
 }
 
-export function listReturnTrips(filter: ReturnFilter = {}): ReturnTrip[] {
-  return Array.from(db.returnTrips.values())
-    .filter((t) => {
-      if (filter.status && t.status !== filter.status) return false;
-      if (filter.originCity && t.originCity !== filter.originCity) return false;
-      if (filter.destCity && t.destCity !== filter.destCity) return false;
-      if (filter.carrierId && t.carrierId !== filter.carrierId) return false;
-      return true;
-    })
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .map(strip);
+export async function listReturnTrips(filter: ReturnFilter = {}): Promise<ReturnTrip[]> {
+  const rows = await prisma.returnTrip.findMany({
+    where: {
+      status: filter.status,
+      originCity: filter.originCity,
+      destCity: filter.destCity,
+      carrierId: filter.carrierId,
+    },
+    include: { carrier: true },
+    orderBy: { createdAt: 'desc' },
+  });
+  return rows.map(mapTrip);
 }
 
-export function getReturnTrip(id: string): StoredReturnTrip | null {
-  return db.returnTrips.get(id) ?? null;
+export async function getReturnTrip(id: string): Promise<ReturnTrip | null> {
+  const t = await prisma.returnTrip.findUnique({ where: { id }, include: { carrier: true } });
+  return t ? mapTrip(t) : null;
 }
 
 export interface CreateReturnTripInput extends PostReturnTripPayload {
   carrierId: string;
-  carrierName: string;
-  carrierCity: string;
 }
 
-export function createReturnTrip(input: CreateReturnTripInput, id: string, createdAt: string): ReturnTrip {
-  const trip: StoredReturnTrip = {
-    id,
-    carrierId: input.carrierId,
-    carrierName: input.carrierName,
-    carrierCity: input.carrierCity,
-    originCity: input.originCity,
-    destCity: input.destCity,
-    availableDate: input.availableDate,
-    capacityKg: input.capacityKg,
-    vehicleType: input.vehicleType,
-    listedPriceMAD: input.listedPriceMAD,
-    notes: input.notes,
-    status: 'OPEN',
-    createdAt,
-  };
-  db.returnTrips.set(id, trip);
-  return strip(trip);
+export async function createReturnTrip(input: CreateReturnTripInput, id: string): Promise<ReturnTrip> {
+  const t = await prisma.returnTrip.create({
+    data: {
+      id,
+      carrierId: input.carrierId,
+      originCity: input.originCity,
+      destCity: input.destCity,
+      availableDate: new Date(input.availableDate),
+      capacityKg: input.capacityKg,
+      vehicleType: input.vehicleType,
+      listedPriceMAD: input.listedPriceMAD,
+      notes: input.notes,
+      status: 'OPEN',
+    },
+    include: { carrier: true },
+  });
+  return mapTrip(t);
 }
 
 export type BookResult =
@@ -63,18 +74,16 @@ export type BookResult =
   | { ok: false; reason: 'NOT_FOUND' | 'NOT_OPEN' };
 
 /** A client books an OPEN return trip → BOOKED. */
-export function bookReturnTrip(id: string): BookResult {
-  const trip = db.returnTrips.get(id);
-  if (!trip) return { ok: false, reason: 'NOT_FOUND' };
-  if (trip.status !== 'OPEN') return { ok: false, reason: 'NOT_OPEN' };
-  trip.status = 'BOOKED';
-  return { ok: true, trip: strip(trip) };
+export async function bookReturnTrip(id: string): Promise<BookResult> {
+  const t = await prisma.returnTrip.findUnique({ where: { id } });
+  if (!t) return { ok: false, reason: 'NOT_FOUND' };
+  if (t.status !== 'OPEN') return { ok: false, reason: 'NOT_OPEN' };
+  const updated = await prisma.returnTrip.update({ where: { id }, data: { status: 'BOOKED' }, include: { carrier: true } });
+  return { ok: true, trip: mapTrip(updated) };
 }
 
 /** The owning carrier cancels (withdraws) their return trip. */
-export function setReturnTripStatus(id: string, status: AvailabilityStatus): ReturnTrip | null {
-  const trip = db.returnTrips.get(id);
-  if (!trip) return null;
-  trip.status = status;
-  return strip(trip);
+export async function setReturnTripStatus(id: string, status: AvailabilityStatus): Promise<ReturnTrip | null> {
+  const t = await prisma.returnTrip.update({ where: { id }, data: { status }, include: { carrier: true } }).catch(() => null);
+  return t ? mapTrip(t) : null;
 }

@@ -1,5 +1,6 @@
-// In-memory per-carrier notification store (UX/scaffolding phase).
-// Backend phase: persist to a `carrier_notifications` table.
+// Per-carrier notification feed, backed by SQL Server via Prisma.
+import { prisma } from '@/lib/prisma';
+import type { CarrierNotification as CarrierRow } from '@prisma/client';
 
 export type CarrierNotifType = 'APPROVED' | 'REJECTED' | 'SUSPENDED' | 'REACTIVATED' | 'JOB_UPDATE';
 
@@ -12,34 +13,39 @@ export interface CarrierNotification {
   read: boolean;
 }
 
-type Store = Map<string, CarrierNotification[]>; // carrierId → notifications[]
-
-const g = globalThis as unknown as { __shahnbidCarrierNotifs?: Store };
-const store: Store = g.__shahnbidCarrierNotifs ?? (g.__shahnbidCarrierNotifs = new Map());
-
-function getList(carrierId: string): CarrierNotification[] {
-  if (!store.has(carrierId)) store.set(carrierId, []);
-  return store.get(carrierId)!;
+function toNotif(n: CarrierRow): CarrierNotification {
+  return {
+    id: n.id,
+    type: n.type as CarrierNotifType,
+    title: n.title,
+    body: n.body,
+    createdAt: n.createdAt.toISOString(),
+    read: n.read,
+  };
 }
 
-export function addCarrierNotification(
+export async function addCarrierNotification(
   carrierId: string,
   n: Omit<CarrierNotification, 'id' | 'createdAt' | 'read'>,
   createdAt: string,
-): CarrierNotification {
-  const item: CarrierNotification = { ...n, id: crypto.randomUUID(), createdAt, read: false };
-  getList(carrierId).unshift(item);
-  return item;
+): Promise<CarrierNotification> {
+  const row = await prisma.carrierNotification.create({
+    data: { id: crypto.randomUUID(), carrierId, type: n.type, title: n.title, body: n.body, createdAt: new Date(createdAt) },
+  });
+  return toNotif(row);
 }
 
-export function listCarrierNotifications(carrierId: string): CarrierNotification[] {
-  return getList(carrierId).slice(0, 20);
+export async function listCarrierNotifications(carrierId: string): Promise<CarrierNotification[]> {
+  const rows = await prisma.carrierNotification.findMany({
+    where: { carrierId }, orderBy: { createdAt: 'desc' }, take: 20,
+  });
+  return rows.map(toNotif);
 }
 
-export function unreadCountForCarrier(carrierId: string): number {
-  return getList(carrierId).filter((n) => !n.read).length;
+export async function unreadCountForCarrier(carrierId: string): Promise<number> {
+  return prisma.carrierNotification.count({ where: { carrierId, read: false } });
 }
 
-export function markAllReadForCarrier(carrierId: string): void {
-  getList(carrierId).forEach((n) => { n.read = true; });
+export async function markAllReadForCarrier(carrierId: string): Promise<void> {
+  await prisma.carrierNotification.updateMany({ where: { carrierId, read: false }, data: { read: true } });
 }

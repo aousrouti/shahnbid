@@ -20,7 +20,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ error: 'Action invalide' }, { status: 400 });
   }
 
-  const bid = getBid(params.id);
+  const bid = await getBid(params.id);
   if (!bid) return NextResponse.json({ error: 'Offre introuvable' }, { status: 404 });
 
   if (action === 'WITHDRAW') {
@@ -30,11 +30,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     if (bid.status !== 'PENDING') {
       return NextResponse.json({ error: 'Seule une offre en attente peut être retirée' }, { status: 409 });
     }
-    return NextResponse.json({ ok: true, bid: setBidStatus(params.id, 'WITHDRAWN') });
+    return NextResponse.json({ ok: true, bid: await setBidStatus(params.id, 'WITHDRAWN') });
   }
 
   // ACCEPT / REJECT — must be the job's owning client.
-  const owner = getJobOwner(bid.jobId);
+  const owner = await getJobOwner(bid.jobId);
   if (user.role !== 'CLIENT' || user.id !== owner) {
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
   }
@@ -43,11 +43,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     if (bid.status !== 'PENDING') {
       return NextResponse.json({ error: 'Cette offre a déjà été traitée' }, { status: 409 });
     }
-    return NextResponse.json({ ok: true, bid: setBidStatus(params.id, 'REJECTED') });
+    return NextResponse.json({ ok: true, bid: await setBidStatus(params.id, 'REJECTED') });
   }
 
   // ACCEPT
-  const result = acceptBid(params.id);
+  const result = await acceptBid(params.id);
   if (!result.ok) {
     const status = result.reason === 'NOT_FOUND' ? 404 : 409;
     const error = result.reason === 'NOT_FOUND' ? 'Offre introuvable' : 'Cette offre ne peut plus être acceptée';

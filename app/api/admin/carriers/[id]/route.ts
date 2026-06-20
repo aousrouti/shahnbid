@@ -57,21 +57,21 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 
   // Read previous status before mutating.
-  const existing = getAccountById(params.id);
+  const existing = await getAccountById(params.id);
   if (!existing || existing.role !== 'CARRIER') {
     return NextResponse.json({ error: 'Transporteur introuvable' }, { status: 404 });
   }
 
-  const updated = setCarrierStatus(params.id, newStatus);
+  const updated = await setCarrierStatus(params.id, newStatus);
   if (!updated) return NextResponse.json({ error: 'Transporteur introuvable' }, { status: 404 });
 
   // Fire in-app notification + push (best-effort, non-blocking).
   const cfg = buildNotifConfig(newStatus, existing.status);
   if (cfg) {
     const now = new Date().toISOString();
-    addCarrierNotification(params.id, { type: cfg.type, title: cfg.title, body: cfg.body }, now);
+    await addCarrierNotification(params.id, { type: cfg.type, title: cfg.title, body: cfg.body }, now);
 
-    const pushSubs = subscriptionsForUser(params.id);
+    const pushSubs = await subscriptionsForUser(params.id);
     if (pushSubs.length > 0) {
       try {
         const wp = getWebPush();

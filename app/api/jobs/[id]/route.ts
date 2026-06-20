@@ -9,7 +9,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
 
-  const job = getJobDetail(params.id);
+  const job = await getJobDetail(params.id);
   if (!job) return NextResponse.json({ error: 'Expédition introuvable' }, { status: 404 });
 
   return NextResponse.json({ job });

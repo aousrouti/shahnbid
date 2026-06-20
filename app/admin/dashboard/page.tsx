@@ -9,10 +9,10 @@ import { Users, Briefcase, DollarSign, Clock } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
-export default function AdminDashboardPage() {
-  const pricing         = getPricingSettings();
-  const carriers        = listCarriers();
-  const jobs            = listJobs();
+export default async function AdminDashboardPage() {
+  const pricing         = await getPricingSettings();
+  const carriers        = await listCarriers();
+  const jobs            = await listJobs();
   const completedJobs   = jobs.filter((j) => j.status === 'COMPLETED');
   const totalCommission = completedJobs.reduce((sum, j) => sum + commissionAmount(j.agreedPriceMAD ?? 0, pricing), 0);
   const pendingCarriers = carriers.filter((c) => c.status === 'PENDING').length;

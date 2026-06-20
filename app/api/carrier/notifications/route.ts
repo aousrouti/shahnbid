@@ -14,8 +14,8 @@ export async function GET() {
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
   }
   return NextResponse.json({
-    notifications: listCarrierNotifications(user.id),
-    unread: unreadCountForCarrier(user.id),
+    notifications: await listCarrierNotifications(user.id),
+    unread: await unreadCountForCarrier(user.id),
   });
 }
 
@@ -25,6 +25,6 @@ export async function POST() {
   if (!user || user.role !== 'CARRIER') {
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
   }
-  markAllReadForCarrier(user.id);
+  await markAllReadForCarrier(user.id);
   return NextResponse.json({ ok: true });
 }

@@ -22,7 +22,7 @@ export async function GET(req: Request) {
   if (dest) filter.destCity = dest;
   if (searchParams.get('mine') && user.role === 'CLIENT') filter.clientId = user.id;
 
-  return NextResponse.json({ jobs: listJobs(filter) });
+  return NextResponse.json({ jobs: await listJobs(filter) });
 }
 
 // Post a new job (CLIENT only).
@@ -41,19 +41,9 @@ export async function POST(req: Request) {
     );
   }
 
-  const job = createJob(
-    {
-      ...parsed.data,
-      clientId: user.id,
-      client: {
-        clientType: user.clientType ?? 'INDIVIDUAL',
-        companyName: user.companyName,
-        fullName: user.fullName,
-        phone: user.phone ?? '',
-      },
-    },
+  const job = await createJob(
+    { ...parsed.data, clientId: user.id },
     `job-${crypto.randomUUID().slice(0, 8)}`,
-    new Date().toISOString(),
   );
 
   return NextResponse.json({ ok: true, job }, { status: 201 });

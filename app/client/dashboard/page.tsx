@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function ClientDashboardPage() {
   const user = await getCurrentUser();
-  const myJobs = user ? listJobs({ clientId: user.id }) : [];
+  const myJobs = user ? await listJobs({ clientId: user.id }) : [];
 
   const publishedCount  = myJobs.filter((j) => j.status === 'PUBLISHED').length;
   const inProgressCount = myJobs.filter((j) => ['ACCEPTED', 'PICKED_UP', 'IN_TRANSIT'].includes(j.status)).length;

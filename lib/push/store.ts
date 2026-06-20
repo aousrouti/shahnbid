@@ -1,34 +1,33 @@
-// In-memory push-subscription store (UX/scaffolding phase).
-// Backend phase: replace with a `push_subscriptions` table keyed by userId + endpoint.
+// Push-subscription store, backed by SQL Server via Prisma.
+import { prisma } from '@/lib/prisma';
 import type { PushSubscription } from 'web-push';
 
-interface StoredSub {
-  userId: string;
-  sub: PushSubscription;
+function toWebPush(r: { endpoint: string; p256dh: string; auth: string }): PushSubscription {
+  return { endpoint: r.endpoint, keys: { p256dh: r.p256dh, auth: r.auth } };
 }
 
-type Store = Map<string, StoredSub>; // keyed by endpoint
-
-const g = globalThis as unknown as { __shahnbidPushSubs?: Store };
-const subs: Store = g.__shahnbidPushSubs ?? (g.__shahnbidPushSubs = new Map());
-
-export function saveSubscription(userId: string, sub: PushSubscription): void {
-  subs.set(sub.endpoint, { userId, sub });
+export async function saveSubscription(userId: string, sub: PushSubscription): Promise<void> {
+  // De-dupe by endpoint (can't be a unique key on NVARCHAR(Max)), then insert.
+  await prisma.pushSubscription.deleteMany({ where: { endpoint: sub.endpoint } });
+  await prisma.pushSubscription.create({
+    data: { userId, endpoint: sub.endpoint, p256dh: sub.keys.p256dh, auth: sub.keys.auth },
+  });
 }
 
-export function removeSubscription(endpoint: string): void {
-  subs.delete(endpoint);
+export async function removeSubscription(endpoint: string): Promise<void> {
+  await prisma.pushSubscription.deleteMany({ where: { endpoint } });
 }
 
-export function allSubscriptions(): PushSubscription[] {
-  return Array.from(subs.values()).map((s) => s.sub);
+export async function allSubscriptions(): Promise<PushSubscription[]> {
+  const rows = await prisma.pushSubscription.findMany();
+  return rows.map(toWebPush);
 }
 
-/** All subscriptions belonging to a specific user (e.g. to notify on status change). */
-export function subscriptionsForUser(userId: string): PushSubscription[] {
-  return Array.from(subs.values()).filter((s) => s.userId === userId).map((s) => s.sub);
+export async function subscriptionsForUser(userId: string): Promise<PushSubscription[]> {
+  const rows = await prisma.pushSubscription.findMany({ where: { userId } });
+  return rows.map(toWebPush);
 }
 
-export function subscriptionCount(): number {
-  return subs.size;
+export async function subscriptionCount(): Promise<number> {
+  return prisma.pushSubscription.count();
 }

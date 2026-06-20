@@ -24,7 +24,7 @@ const BID_STATUS_COLORS: Record<string, string> = {
 
 export default async function CarrierBidsPage() {
   const user = await getCurrentUser();
-  const bids = user ? listBidsForCarrier(user.id) : [];
+  const bids = user ? await listBidsForCarrier(user.id) : [];
 
   return (
     <div className="space-y-6">

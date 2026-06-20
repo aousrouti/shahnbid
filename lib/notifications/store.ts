@@ -1,6 +1,6 @@
-// In-memory admin notification feed (UX/scaffolding phase).
-// Backend phase: persist to a table + send email via Azure Communication Services
-// (notifyAdminNewCarrier) and/or Web Push to the admin.
+// Admin notification feed, backed by SQL Server via Prisma.
+import { prisma } from '@/lib/prisma';
+import type { AdminNotification as AdminRow } from '@prisma/client';
 
 export type AdminNotificationType = 'NEW_CARRIER' | 'NEW_CLIENT';
 
@@ -14,31 +14,37 @@ export interface AdminNotification {
   read: boolean;
 }
 
-const g = globalThis as unknown as { __shahnbidAdminNotifs?: AdminNotification[] };
-const notifs: AdminNotification[] = g.__shahnbidAdminNotifs ?? (g.__shahnbidAdminNotifs = []);
+function toNotif(n: AdminRow): AdminNotification {
+  return {
+    id: n.id,
+    type: n.type as AdminNotificationType,
+    title: n.title,
+    body: n.body,
+    link: n.link,
+    createdAt: n.createdAt.toISOString(),
+    read: n.read,
+  };
+}
 
-export function addAdminNotification(
+export async function addAdminNotification(
   n: Omit<AdminNotification, 'id' | 'createdAt' | 'read'>,
   createdAt: string,
-): AdminNotification {
-  const item: AdminNotification = {
-    ...n,
-    id: crypto.randomUUID(),
-    createdAt,
-    read: false,
-  };
-  notifs.unshift(item); // newest first
-  return item;
+): Promise<AdminNotification> {
+  const row = await prisma.adminNotification.create({
+    data: { id: crypto.randomUUID(), type: n.type, title: n.title, body: n.body, link: n.link, createdAt: new Date(createdAt) },
+  });
+  return toNotif(row);
 }
 
-export function listAdminNotifications(): AdminNotification[] {
-  return notifs.slice(0, 50);
+export async function listAdminNotifications(): Promise<AdminNotification[]> {
+  const rows = await prisma.adminNotification.findMany({ orderBy: { createdAt: 'desc' }, take: 50 });
+  return rows.map(toNotif);
 }
 
-export function unreadCount(): number {
-  return notifs.filter((n) => !n.read).length;
+export async function unreadCount(): Promise<number> {
+  return prisma.adminNotification.count({ where: { read: false } });
 }
 
-export function markAllRead(): void {
-  notifs.forEach((n) => { n.read = true; });
+export async function markAllRead(): Promise<void> {
+  await prisma.adminNotification.updateMany({ where: { read: false }, data: { read: true } });
 }

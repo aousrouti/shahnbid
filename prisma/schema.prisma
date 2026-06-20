@@ -1,164 +1,95 @@
-// ShahnBid data model — backend phase target.
+// ShahnBid data model — SQL Server (Express) target.
 //
-// This schema is the design artifact for the persistence layer. The app currently
-// runs against an in-memory data-access layer (lib/server/*-repo.ts) that mirrors
-// these models, so switching to a real database is an internal swap inside the
-// repo files — the API routes and UI don't change.
+// Provider is sqlserver for now; the user may switch to postgresql later. To keep
+// that switch cheap, this schema sticks to the portable subset:
+//   - enums are modeled as String (SQL Server has no native enum in Prisma)
+//   - the photo list is stored as a JSON string (no scalar arrays on SQL Server)
+//   - string keys / indexed string columns are length-bounded (SQL Server caps
+//     index keys at 900 bytes; unbounded NVARCHAR(1000) keys would overflow)
 //
-// To go live:
-//   1. Provision Postgres (Vercel Postgres / Neon / Supabase) and set DATABASE_URL.
-//   2. npm install
+// The app already validates these string fields against TS unions, so String
+// columns are safe. Allowed values are noted in comments next to each field.
+//
+// Bring-up:
+//   1. Enable TCP/IP + mixed-mode auth, create the `shahnbid` DB + login (elevated script).
+//   2. Set DATABASE_URL in .env.local.
 //   3. npx prisma migrate dev --name init
-//   4. Swap the repo internals from the in-memory maps to PrismaClient.
+//   4. Repo layer (lib/server/*-repo.ts) swaps from the in-memory maps to `prisma`.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlserver"
   url      = env("DATABASE_URL")
-}
-
-// ─────────────────────────────── Enums ───────────────────────────────
-
-enum UserRole {
-  CLIENT
-  CARRIER
-  ADMIN
-}
-
-enum ClientType {
-  INDIVIDUAL
-  BUSINESS
-}
-
-enum CarrierStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  SUSPENDED
-}
-
-enum JobStatus {
-  DRAFT
-  PUBLISHED
-  ACCEPTED
-  PICKED_UP
-  IN_TRANSIT
-  DELIVERED
-  COMPLETED
-  CANCELLED
-}
-
-enum JobSource {
-  CLIENT_POSTED
-  RETURN_TRIP
-}
-
-enum BidStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-  WITHDRAWN
-}
-
-enum CargoType {
-  GENERAL
-  REFRIGERATED
-  HAZMAT
-  FRAGILE
-  OVERSIZED
-  LIVESTOCK
-}
-
-enum AvailabilityStatus {
-  OPEN
-  BOOKED
-  EXPIRED
-  CANCELLED
-}
-
-enum CommissionPayer {
-  CARRIER
-  CLIENT
 }
 
 // ───────────────────────────── Accounts ──────────────────────────────
 
+// Flat account table matching the app's PublicAccount shape (client- and
+// carrier-specific fields are nullable columns). Simpler 1:1 mapping than a
+// normalized split, and the app already validates each field against TS unions.
 model Profile {
-  id           String          @id @default(cuid())
-  role         UserRole
-  email        String          @unique
-  passwordHash String
-  fullName     String
-  phone        String?
-  country      String?
-  city         String?
-  createdAt    DateTime        @default(now())
+  id           String   @id @db.NVarChar(50)
+  role         String   @db.NVarChar(20)   // CLIENT | CARRIER | ADMIN
+  email        String   @unique @db.NVarChar(255)
+  passwordHash String   @db.NVarChar(255)
+  fullName     String   @db.NVarChar(200)
+  phone        String?  @db.NVarChar(40)
+  country      String?  @db.NVarChar(100)
+  city         String?  @db.NVarChar(100)
+  // Client-only
+  clientType   String?  @db.NVarChar(20)   // INDIVIDUAL | BUSINESS
+  companyName  String?  @db.NVarChar(200)
+  ice          String?  @db.NVarChar(20)
+  address      String?  @db.NVarChar(400)
+  // Carrier-only
+  status          String?   @db.NVarChar(20)   // PENDING | APPROVED | REJECTED | SUSPENDED
+  licenseNumber   String?   @db.NVarChar(100)
+  insuranceExpiry String?   @db.NVarChar(40)
+  createdAt    DateTime @default(now())
 
-  client       ClientProfile?
-  carrier      CarrierProfile?
-  jobs         Job[]           @relation("ClientJobs")
-  bids         Bid[]           @relation("CarrierBids")
-  returnTrips  ReturnTrip[]    @relation("CarrierReturns")
-  pushSubs     PushSubscription[]
+  jobs          Job[]                 @relation("ClientJobs")
+  bids          Bid[]                 @relation("CarrierBids")
+  returnTrips   ReturnTrip[]          @relation("CarrierReturns")
+  pushSubs      PushSubscription[]
   notifications CarrierNotification[]
 
   @@index([role])
-}
-
-model ClientProfile {
-  id          String     @id @default(cuid())
-  profile     Profile    @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  profileId   String     @unique
-  clientType  ClientType
-  companyName String?    // BUSINESS only
-  ice         String?    // BUSINESS only — Moroccan tax ID (15 digits)
-  address     String?    // BUSINESS only
-}
-
-model CarrierProfile {
-  id              String        @id @default(cuid())
-  profile         Profile       @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  profileId       String        @unique
-  companyName     String
-  licenseNumber   String
-  insuranceExpiry DateTime
-  status          CarrierStatus @default(PENDING)
-
   @@index([status])
 }
 
 // ──────────────────────────── Marketplace ────────────────────────────
 
 model Job {
-  id             String     @id @default(cuid())
-  client         Profile    @relation("ClientJobs", fields: [clientId], references: [id])
-  clientId       String
-  source         JobSource  @default(CLIENT_POSTED)
-  status         JobStatus  @default(PUBLISHED)
-  cargoType      CargoType
-  description    String
+  id             String    @id @db.NVarChar(50)
+  client         Profile   @relation("ClientJobs", fields: [clientId], references: [id])
+  clientId       String    @db.NVarChar(50)
+  source         String    @default("CLIENT_POSTED") @db.NVarChar(20)  // CLIENT_POSTED | RETURN_TRIP
+  status         String    @default("PUBLISHED") @db.NVarChar(20)      // DRAFT|PUBLISHED|ACCEPTED|PICKED_UP|IN_TRANSIT|DELIVERED|COMPLETED|CANCELLED
+  cargoType      String    @db.NVarChar(20)   // GENERAL|REFRIGERATED|HAZMAT|FRAGILE|OVERSIZED|LIVESTOCK
+  description    String    @db.NVarChar(Max)
   weightKg       Int
-  fragile        Boolean    @default(false)
-  hazmat         Boolean    @default(false)
-  originCity     String
-  originAddress  String
-  destCity       String
-  destAddress    String
+  fragile        Boolean   @default(false)
+  hazmat         Boolean   @default(false)
+  originCity     String    @db.NVarChar(100)
+  originAddress  String    @db.NVarChar(400)
+  destCity       String    @db.NVarChar(100)
+  destAddress    String    @db.NVarChar(400)
   pickupDateFrom DateTime
   pickupDateTo   DateTime?
   deliveryDate   DateTime
-  notes          String?
-  photoUrls      String[]   @default([])
+  notes          String?   @db.NVarChar(Max)
+  photoUrls      String    @default("[]") @db.NVarChar(Max)  // JSON array of URLs
 
-  // Set when a bid is accepted. Rate is snapshotted so later pricing
-  // changes never rewrite historical earnings.
-  agreedPriceMAD     Int?
-  acceptedBid        Bid?    @relation("AcceptedBid", fields: [acceptedBidId], references: [id])
-  acceptedBidId      String? @unique
-  commissionRateSnap Float?  // commissionRate at the moment of acceptance
+  // Set when a bid is accepted. The rate is snapshotted so later pricing
+  // changes never rewrite historical earnings. acceptedBidId is a plain column
+  // (SQL Server UNIQUE allows only one NULL row, which would break multi-job inserts).
+  agreedPriceMAD        Int?
+  acceptedBidId         String? @db.NVarChar(50)
+  commissionRateSnap    Float?
+  commissionCapturedMAD Int?
 
   bids      Bid[]    @relation("JobBids")
   createdAt DateTime @default(now())
@@ -169,19 +100,17 @@ model Job {
 }
 
 model Bid {
-  id          String    @id @default(cuid())
-  job         Job       @relation("JobBids", fields: [jobId], references: [id], onDelete: Cascade)
-  jobId       String
-  carrier     Profile   @relation("CarrierBids", fields: [carrierId], references: [id])
-  carrierId   String
+  id          String   @id @db.NVarChar(50)
+  job         Job      @relation("JobBids", fields: [jobId], references: [id], onDelete: Cascade)
+  jobId       String   @db.NVarChar(50)
+  carrier     Profile  @relation("CarrierBids", fields: [carrierId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  carrierId   String   @db.NVarChar(50)
   priceMAD    Int
   etaDays     Int
-  vehicleType String
-  notes       String?
-  status      BidStatus @default(PENDING)
-  createdAt   DateTime  @default(now())
-
-  acceptedFor Job?      @relation("AcceptedBid")
+  vehicleType String   @db.NVarChar(60)
+  notes       String?  @db.NVarChar(Max)
+  status      String   @default("PENDING") @db.NVarChar(20)   // PENDING | ACCEPTED | REJECTED | WITHDRAWN
+  createdAt   DateTime @default(now())
 
   @@unique([jobId, carrierId]) // one active bid per carrier per job
   @@index([carrierId])
@@ -189,18 +118,18 @@ model Bid {
 }
 
 model ReturnTrip {
-  id             String             @id @default(cuid())
-  carrier        Profile            @relation("CarrierReturns", fields: [carrierId], references: [id])
-  carrierId      String
-  originCity     String
-  destCity       String
+  id             String   @id @db.NVarChar(50)
+  carrier        Profile  @relation("CarrierReturns", fields: [carrierId], references: [id])
+  carrierId      String   @db.NVarChar(50)
+  originCity     String   @db.NVarChar(100)
+  destCity       String   @db.NVarChar(100)
   availableDate  DateTime
   capacityKg     Int
-  vehicleType    String
+  vehicleType    String   @db.NVarChar(60)
   listedPriceMAD Int
-  notes          String?
-  status         AvailabilityStatus @default(OPEN)
-  createdAt      DateTime           @default(now())
+  notes          String?  @db.NVarChar(Max)
+  status         String   @default("OPEN") @db.NVarChar(20)   // OPEN | BOOKED | EXPIRED | CANCELLED
+  createdAt      DateTime @default(now())
 
   @@index([status])
   @@index([originCity, destCity])
@@ -210,22 +139,22 @@ model ReturnTrip {
 
 // Single-row table holding the admin-editable pricing rules.
 model PricingSettings {
-  id               Int             @id @default(1)
-  commissionRate   Float           @default(0.10)
-  minCommissionMAD Int             @default(50)
-  vatRate          Float           @default(0.20)
-  minJobPriceMAD   Int             @default(100)
-  commissionPayer  CommissionPayer @default(CARRIER)
-  updatedBy        String          @default("système")
-  updatedAt        DateTime        @updatedAt
+  id               Int      @id @default(1)
+  commissionRate   Float    @default(0.10)
+  minCommissionMAD Int      @default(50)
+  vatRate          Float    @default(0.20)
+  minJobPriceMAD   Int      @default(100)
+  commissionPayer  String   @default("CARRIER") @db.NVarChar(20)  // CARRIER | CLIENT
+  updatedBy        String   @default("système") @db.NVarChar(255)
+  updatedAt        DateTime @updatedAt
 }
 
 model AdminNotification {
-  id        String   @id @default(cuid())
-  type      String   // NEW_CARRIER | NEW_CLIENT
-  title     String
-  body      String
-  link      String
+  id        String   @id @db.NVarChar(50)
+  type      String   @db.NVarChar(30)   // NEW_CARRIER | NEW_CLIENT
+  title     String   @db.NVarChar(200)
+  body      String   @db.NVarChar(Max)
+  link      String   @db.NVarChar(400)
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
@@ -233,12 +162,12 @@ model AdminNotification {
 }
 
 model CarrierNotification {
-  id        String   @id @default(cuid())
+  id        String   @id @db.NVarChar(50)
   carrier   Profile  @relation(fields: [carrierId], references: [id], onDelete: Cascade)
-  carrierId String
-  type      String   // APPROVED | REJECTED | SUSPENDED | REACTIVATED
-  title     String
-  body      String
+  carrierId String   @db.NVarChar(50)
+  type      String   @db.NVarChar(30)   // APPROVED | REJECTED | SUSPENDED | REACTIVATED | JOB_UPDATE
+  title     String   @db.NVarChar(200)
+  body      String   @db.NVarChar(Max)
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
@@ -246,11 +175,12 @@ model CarrierNotification {
 }
 
 model PushSubscription {
-  endpoint  String   @id
+  id        String   @id @default(cuid()) @db.NVarChar(50)
   user      Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  p256dh    String
-  auth      String
+  userId    String   @db.NVarChar(50)
+  endpoint  String   @db.NVarChar(Max)   // browser endpoint URLs can exceed index-key limits
+  p256dh    String   @db.NVarChar(Max)
+  auth      String   @db.NVarChar(200)
   createdAt DateTime @default(now())
 
   @@index([userId])

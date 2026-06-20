@@ -13,12 +13,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Données invalides' }, { status: 400 });
   }
   const d = parsed.data;
-  if (emailExists(d.email)) {
+  if (await emailExists(d.email)) {
     return NextResponse.json({ error: 'Un compte existe déjà avec cet email.' }, { status: 409 });
   }
 
   // New carriers start PENDING (await admin approval) but can sign in to the portal.
-  const account = addAccount({
+  const account = await addAccount({
     role: 'CARRIER',
     email: d.email,
     password: d.password,
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     status: 'PENDING',
   });
 
-  addAdminNotification({
+  await addAdminNotification({
     type: 'NEW_CARRIER',
     title: "Nouveau transporteur en attente d'approbation",
     body: `${account.companyName} — ${d.city}, ${d.country} · licence ${d.licenseNumber}`,

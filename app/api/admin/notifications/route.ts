@@ -13,13 +13,13 @@ export async function GET() {
   if (!(await requireAdmin())) {
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
   }
-  return NextResponse.json({ items: listAdminNotifications(), unread: unreadCount() });
+  return NextResponse.json({ items: await listAdminNotifications(), unread: await unreadCount() });
 }
 
 export async function POST() {
   if (!(await requireAdmin())) {
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
   }
-  markAllRead();
+  await markAllRead();
   return NextResponse.json({ ok: true, unread: 0 });
 }

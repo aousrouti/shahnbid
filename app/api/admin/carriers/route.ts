@@ -9,5 +9,5 @@ export async function GET() {
   if (user?.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
   }
-  return NextResponse.json({ carriers: listCarriers() });
+  return NextResponse.json({ carriers: await listCarriers() });
 }

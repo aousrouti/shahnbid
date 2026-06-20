@@ -14,11 +14,11 @@ export const dynamic = 'force-dynamic';
 
 export default async function CarrierJobDetailPage({ params }: { params: { id: string } }) {
   const user = await getCurrentUser();
-  const job  = getJobDetail(params.id);
+  const job  = await getJobDetail(params.id);
   if (!job) notFound();
 
   const alreadyBid = !!user && job.bids.some((b) => b.carrier.id === user.id && b.status === 'PENDING');
-  const isAssigned = !!user && getAcceptedCarrierId(params.id) === user.id;
+  const isAssigned = !!user && (await getAcceptedCarrierId(params.id)) === user.id;
 
   return (
     <div className="space-y-6 max-w-4xl">

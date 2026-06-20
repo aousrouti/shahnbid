@@ -8,9 +8,9 @@ import { DollarSign, MapPin, Receipt, SlidersHorizontal } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
-export default function AdminCommissionPage() {
-  const pricing = getPricingSettings();
-  const completedJobs = listJobs({ status: 'COMPLETED' }).filter((j) => j.agreedPriceMAD);
+export default async function AdminCommissionPage() {
+  const pricing = await getPricingSettings();
+  const completedJobs = (await listJobs({ status: 'COMPLETED' })).filter((j) => j.agreedPriceMAD);
   // Use the rate snapshotted at acceptance per job, so past pricing changes don't rewrite history.
   const rows = completedJobs.map((j) => ({
     job: j,

@@ -13,11 +13,11 @@ export const dynamic = 'force-dynamic';
 
 export default async function ClientJobDetailPage({ params }: { params: { id: string } }) {
   const user = await getCurrentUser();
-  const job  = getJobDetail(params.id);
+  const job  = await getJobDetail(params.id);
   if (!job) notFound();
 
   // Only the owning client (or admin) may view a job's bids.
-  if (user?.role === 'CLIENT' && getJobOwner(params.id) !== user.id) notFound();
+  if (user?.role === 'CLIENT' && (await getJobOwner(params.id)) !== user.id) notFound();
 
   return (
     <div className="space-y-6 max-w-4xl">

@@ -11,7 +11,7 @@ export async function GET() {
   if (user?.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
   }
-  return NextResponse.json({ settings: getPricingSettings() });
+  return NextResponse.json({ settings: await getPricingSettings() });
 }
 
 // Update pricing settings (admin only).
@@ -30,6 +30,6 @@ export async function PUT(req: Request) {
     );
   }
 
-  const updated = updatePricingSettings(parsed.data, user.email, new Date().toISOString());
+  const updated = await updatePricingSettings(parsed.data, user.email);
   return NextResponse.json({ ok: true, settings: updated });
 }

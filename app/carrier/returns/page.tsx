@@ -23,7 +23,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default async function CarrierReturnsPage() {
   const user = await getCurrentUser();
-  const myTrips = user ? listReturnTrips({ carrierId: user.id }) : [];
+  const myTrips = user ? await listReturnTrips({ carrierId: user.id }) : [];
 
   return (
     <div className="space-y-6">

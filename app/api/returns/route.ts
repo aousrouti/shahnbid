@@ -26,7 +26,7 @@ export async function GET(req: Request) {
     if (dest) filter.destCity = dest;
   }
 
-  return NextResponse.json({ trips: listReturnTrips(filter) });
+  return NextResponse.json({ trips: await listReturnTrips(filter) });
 }
 
 // Publish a return trip (CARRIER, must be APPROVED).
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
   }
 
   // Enforce the admin-set price floor.
-  const { minJobPriceMAD } = getPricingSettings();
+  const { minJobPriceMAD } = await getPricingSettings();
   if (parsed.data.listedPriceMAD < minJobPriceMAD) {
     return NextResponse.json(
       { error: `Le prix minimum autorisé est de ${minJobPriceMAD} MAD` },
@@ -60,15 +60,9 @@ export async function POST(req: Request) {
     );
   }
 
-  const trip = createReturnTrip(
-    {
-      ...parsed.data,
-      carrierId: user.id,
-      carrierName: user.companyName ?? user.fullName,
-      carrierCity: user.city ?? '',
-    },
+  const trip = await createReturnTrip(
+    { ...parsed.data, carrierId: user.id },
     `rt-${crypto.randomUUID().slice(0, 8)}`,
-    new Date().toISOString(),
   );
 
   return NextResponse.json({ ok: true, trip }, { status: 201 });
