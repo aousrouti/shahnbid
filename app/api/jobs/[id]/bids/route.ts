@@ -4,6 +4,8 @@ import { getJobDetail, getJobOwner } from '@/lib/server/jobs-repo';
 import { listBidsForJob, submitBid, carrierHasActiveBid } from '@/lib/server/bids-repo';
 import { submitBidSchema } from '@/lib/validations';
 import { getPricingSettings } from '@/lib/pricing/store';
+import { addUserNotification } from '@/lib/notifications/user-store';
+import { addAdminNotification } from '@/lib/notifications/store';
 
 export const runtime = 'nodejs';
 
@@ -72,6 +74,24 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     },
     `bid-${crypto.randomUUID().slice(0, 8)}`,
   );
+
+  // Notify the owning client + admin of the new bid.
+  const now = new Date().toISOString();
+  const route = `${job.originCity} → ${job.destCity}`;
+  const owner = await getJobOwner(params.id);
+  if (owner) {
+    await addUserNotification(owner, {
+      type: 'NEW_BID',
+      title: 'Nouvelle offre reçue',
+      body: `${user.companyName ?? user.fullName} a proposé ${bid.priceMAD} MAD pour ${route}.`,
+    }, now);
+  }
+  await addAdminNotification({
+    type: 'NEW_BID',
+    title: 'Nouvelle offre soumise',
+    body: `${user.companyName ?? user.fullName} — ${bid.priceMAD} MAD sur ${route}`,
+    link: '/admin/jobs',
+  }, now);
 
   return NextResponse.json({ ok: true, bid }, { status: 201 });
 }

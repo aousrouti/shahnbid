@@ -6,6 +6,7 @@ import { getAccountById } from '@/lib/demo-data/accounts';
 import { sendEmail } from '@/lib/email';
 import { getPayments } from '@/lib/payments';
 import { setJobPayment } from '@/lib/server/jobs-repo';
+import { addUserNotification } from '@/lib/notifications/user-store';
 
 export const runtime = 'nodejs';
 
@@ -65,6 +66,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   } catch (e) {
     console.error('[payments] authorize failed:', e);
   }
+  await addUserNotification(result.bid.carrier.id, {
+    type: 'BID_ACCEPTED',
+    title: 'Offre acceptée ✓',
+    body: `Votre offre de ${result.bid.priceMAD} MAD a été acceptée. Vous pouvez démarrer la livraison.`,
+  }, new Date().toISOString());
   const carrier = await getAccountById(result.bid.carrier.id);
   if (carrier) {
     await sendEmail({

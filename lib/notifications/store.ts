@@ -2,7 +2,7 @@
 import { prisma } from '@/lib/prisma';
 import type { AdminNotification as AdminRow } from '@prisma/client';
 
-export type AdminNotificationType = 'NEW_CARRIER' | 'NEW_CLIENT';
+export type AdminNotificationType = 'NEW_CARRIER' | 'NEW_CLIENT' | 'NEW_JOB' | 'NEW_BID';
 
 export interface AdminNotification {
   id: string;

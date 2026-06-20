@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { getJobDetail, getJobOwner, advanceJobStatus } from '@/lib/server/jobs-repo';
 import { getAcceptedCarrierId } from '@/lib/server/bids-repo';
-import { addCarrierNotification } from '@/lib/notifications/carrier-store';
+import { addUserNotification } from '@/lib/notifications/user-store';
+import { JOB_STATUS_LABELS } from '@/lib/constants';
 import type { JobStatus } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -44,15 +45,28 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ error }, { status });
   }
 
-  // On completion, let the assigned carrier know (and that the job is settled).
+  const now = new Date().toISOString();
+  const route = `${job.originCity} → ${job.destCity}`;
+
   if (target === 'COMPLETED') {
+    // Notify the assigned carrier that the job is settled.
     const carrierId = await getAcceptedCarrierId(params.id);
     if (carrierId) {
-      await addCarrierNotification(carrierId, {
+      await addUserNotification(carrierId, {
         type: 'JOB_UPDATE',
         title: 'Expédition terminée ✓',
-        body: `${job.originCity} → ${job.destCity} a été confirmée livrée par le client. Paiement en cours de traitement.`,
-      }, new Date().toISOString());
+        body: `${route} a été confirmée livrée par le client. Paiement en cours de traitement.`,
+      }, now);
+    }
+  } else {
+    // Carrier advanced the shipment — notify the owning client.
+    const clientId = await getJobOwner(params.id);
+    if (clientId) {
+      await addUserNotification(clientId, {
+        type: 'STATUS_UPDATE',
+        title: `Statut mis à jour : ${JOB_STATUS_LABELS[target]}`,
+        body: `Votre expédition ${route} est maintenant « ${JOB_STATUS_LABELS[target]} ».`,
+      }, now);
     }
   }
 

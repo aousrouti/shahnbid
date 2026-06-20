@@ -26,7 +26,7 @@ const EXTRA_CARRIERS = [
 async function main() {
   // Clear in FK-safe order.
   await prisma.pushSubscription.deleteMany();
-  await prisma.carrierNotification.deleteMany();
+  await prisma.notification.deleteMany();
   await prisma.adminNotification.deleteMany();
   await prisma.bid.deleteMany();
   await prisma.returnTrip.deleteMany();

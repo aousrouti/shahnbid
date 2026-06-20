@@ -30,7 +30,10 @@ class ResendEmail implements EmailProvider {
       headers: { Authorization: `Bearer ${this.key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ from: this.from, to: m.to, subject: m.subject, text: m.text }),
     });
-    if (!res.ok) throw new Error(`Resend ${res.status}`);
+    if (!res.ok) {
+      const detail = await res.json().catch(() => null);
+      throw new Error(`Resend ${res.status}: ${detail?.message ?? 'envoi refusé'}`);
+    }
   }
 }
 

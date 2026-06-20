@@ -54,7 +54,7 @@ model Profile {
   bids          Bid[]                 @relation("CarrierBids")
   returnTrips   ReturnTrip[]          @relation("CarrierReturns")
   pushSubs      PushSubscription[]
-  notifications CarrierNotification[]
+  notifications Notification[]
 
   @@index([role])
   @@index([status])
@@ -163,17 +163,18 @@ model AdminNotification {
   @@index([read])
 }
 
-model CarrierNotification {
+// Per-user in-app notification feed (clients and carriers alike).
+model Notification {
   id        String   @id @db.NVarChar(50)
-  carrier   Profile  @relation(fields: [carrierId], references: [id], onDelete: Cascade)
-  carrierId String   @db.NVarChar(50)
-  type      String   @db.NVarChar(30)   // APPROVED | REJECTED | SUSPENDED | REACTIVATED | JOB_UPDATE
+  user      Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @db.NVarChar(50)
+  type      String   @db.NVarChar(40)
   title     String   @db.NVarChar(200)
   body      String   @db.NVarChar(Max)
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  @@index([carrierId, read])
+  @@index([userId, read])
 }
 
 model PushSubscription {

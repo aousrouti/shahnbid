@@ -4,14 +4,14 @@ import { getAccountById, setCarrierStatus } from '@/lib/demo-data/accounts';
 import type { CarrierStatus } from '@/lib/types';
 import { subscriptionsForUser } from '@/lib/push/store';
 import { getWebPush } from '@/lib/push/webpush';
-import { addCarrierNotification, type CarrierNotifType } from '@/lib/notifications/carrier-store';
+import { addUserNotification, type NotifType } from '@/lib/notifications/user-store';
 import { sendEmail } from '@/lib/email';
 
 export const runtime = 'nodejs';
 
 const ALLOWED: CarrierStatus[] = ['APPROVED', 'REJECTED', 'SUSPENDED', 'PENDING'];
 
-interface NotifConfig { type: CarrierNotifType; title: string; body: string }
+interface NotifConfig { type: NotifType; title: string; body: string }
 
 function buildNotifConfig(newStatus: CarrierStatus, prevStatus?: CarrierStatus): NotifConfig | null {
   if (newStatus === 'APPROVED' && prevStatus && prevStatus !== 'PENDING') {
@@ -70,7 +70,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const cfg = buildNotifConfig(newStatus, existing.status);
   if (cfg) {
     const now = new Date().toISOString();
-    await addCarrierNotification(params.id, { type: cfg.type, title: cfg.title, body: cfg.body }, now);
+    await addUserNotification(params.id, { type: cfg.type, title: cfg.title, body: cfg.body }, now);
     await sendEmail({ to: existing.email, subject: `ShahnBid — ${cfg.title}`, text: `Bonjour ${existing.fullName},\n\n${cfg.body}\n\n— L'équipe ShahnBid` });
 
     const pushSubs = await subscriptionsForUser(params.id);

@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { listJobs, createJob, type JobFilter } from '@/lib/server/jobs-repo';
+import { listCarriers } from '@/lib/demo-data/accounts';
+import { addUserNotification } from '@/lib/notifications/user-store';
+import { addAdminNotification } from '@/lib/notifications/store';
 import { postJobSchema } from '@/lib/validations';
 import type { JobStatus } from '@/lib/types';
 
@@ -45,6 +48,26 @@ export async function POST(req: Request) {
     { ...parsed.data, clientId: user.id },
     `job-${crypto.randomUUID().slice(0, 8)}`,
   );
+
+  // Notify admin + approved carriers based in the origin/destination city.
+  const now = new Date().toISOString();
+  const route = `${job.originCity} → ${job.destCity}`;
+  await addAdminNotification({
+    type: 'NEW_JOB',
+    title: 'Nouvelle expédition publiée',
+    body: `${route} · ${job.weightKg} kg`,
+    link: '/admin/jobs',
+  }, now);
+
+  const carriers = await listCarriers();
+  const matches = carriers.filter(
+    (c) => c.status === 'APPROVED' && (c.city === job.originCity || c.city === job.destCity),
+  );
+  await Promise.all(matches.map((c) => addUserNotification(c.id, {
+    type: 'NEW_JOB',
+    title: 'Nouvelle expédition sur votre zone',
+    body: `${route} · ${job.weightKg} kg — consultez les appels d'offres.`,
+  }, now)));
 
   return NextResponse.json({ ok: true, job }, { status: 201 });
 }
