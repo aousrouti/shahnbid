@@ -12,17 +12,39 @@ const cargoTypes = Object.entries(CARGO_TYPE_LABELS) as [string, string][];
 export default function PostJobForm() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<PostJobInput>({
     resolver: zodResolver(postJobSchema),
     defaultValues: { fragile: false, hazmat: false },
   });
+
+  async function onPhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    setUploading(true);
+    setServerError(null);
+    try {
+      for (const file of files.slice(0, 8 - photoUrls.length)) {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch('/api/uploads', { method: 'POST', body: fd });
+        const d = await res.json().catch(() => ({}));
+        if (res.ok && d.url) setPhotoUrls((p) => [...p, d.url]);
+        else setServerError(d.error ?? 'Échec du téléversement.');
+      }
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  }
 
   async function onSubmit(data: PostJobInput) {
     setServerError(null);
     const res = await fetch('/api/jobs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...data, photoUrls }),
     });
     if (!res.ok) {
       const d = await res.json().catch(() => ({}));
@@ -139,6 +161,31 @@ export default function PostJobForm() {
           <label className={labelClass}>Notes (optionnel)</label>
           <textarea {...register('notes')} rows={3} placeholder="Instructions spéciales, horaires d'accès…" className={fieldClass} />
         </div>
+      </div>
+
+      {/* Section 5 — Photos */}
+      <div className={sectionClass}>
+        <h2 className="font-semibold text-brand-navy">5. Photos de la marchandise (optionnel)</h2>
+        <input
+          type="file" accept="image/jpeg,image/png,image/webp" multiple
+          onChange={onPhotoChange} disabled={uploading || photoUrls.length >= 8}
+          className="block text-sm text-gray-600 file:mr-3 file:rounded-input file:border-0 file:bg-brand-light file:px-3 file:py-2 file:text-sm file:font-medium file:text-brand-primary"
+        />
+        {uploading && <p className="text-xs text-gray-400">Téléversement…</p>}
+        {photoUrls.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {photoUrls.map((url) => (
+              <div key={url} className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={url} alt="" className="h-20 w-20 rounded-input object-cover border border-brand-border" />
+                <button
+                  type="button" onClick={() => setPhotoUrls((p) => p.filter((u) => u !== url))}
+                  className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-600 text-white text-xs leading-none"
+                >×</button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {serverError && (

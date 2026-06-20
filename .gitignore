@@ -14,3 +14,6 @@ dist/
 
 # Local tooling (preview launch config)
 .claude/
+
+# User-uploaded files (local storage adapter)
+public/uploads/

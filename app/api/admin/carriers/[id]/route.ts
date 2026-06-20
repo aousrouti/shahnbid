@@ -5,6 +5,7 @@ import type { CarrierStatus } from '@/lib/types';
 import { subscriptionsForUser } from '@/lib/push/store';
 import { getWebPush } from '@/lib/push/webpush';
 import { addCarrierNotification, type CarrierNotifType } from '@/lib/notifications/carrier-store';
+import { sendEmail } from '@/lib/email';
 
 export const runtime = 'nodejs';
 
@@ -70,6 +71,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (cfg) {
     const now = new Date().toISOString();
     await addCarrierNotification(params.id, { type: cfg.type, title: cfg.title, body: cfg.body }, now);
+    await sendEmail({ to: existing.email, subject: `ShahnBid — ${cfg.title}`, text: `Bonjour ${existing.fullName},\n\n${cfg.body}\n\n— L'équipe ShahnBid` });
 
     const pushSubs = await subscriptionsForUser(params.id);
     if (pushSubs.length > 0) {

@@ -79,6 +79,16 @@ export default async function ClientJobDetailPage({ params }: { params: { id: st
         </div>
       </div>
 
+      {/* Cargo photos */}
+      {job.photoUrls.length > 0 && (
+        <div className="flex flex-wrap gap-3">
+          {job.photoUrls.map((url) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={url} src={url} alt="Marchandise" className="h-28 w-28 rounded-card object-cover border border-brand-border" />
+          ))}
+        </div>
+      )}
+
       {/* Shipment tracking (self-hides until the job is accepted) */}
       <JobStatusActions jobId={params.id} status={job.status} actor="client" />
 

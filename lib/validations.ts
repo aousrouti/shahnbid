@@ -53,6 +53,7 @@ export const postJobSchema = z.object({
   pickupDateTo:   z.string(),
   deliveryDate:   z.string(),
   notes:          z.string().max(300).optional(),
+  photoUrls:      z.array(z.string()).max(8).optional(),
 }).refine(
   (d) => new Date(d.pickupDateTo) >= new Date(d.pickupDateFrom),
   { message: 'Date de fin avant date de début', path: ['pickupDateTo'] },

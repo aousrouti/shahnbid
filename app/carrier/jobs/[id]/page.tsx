@@ -59,6 +59,16 @@ export default async function CarrierJobDetailPage({ params }: { params: { id: s
         </div>
       </div>
 
+      {/* Cargo photos */}
+      {job.photoUrls.length > 0 && (
+        <div className="flex flex-wrap gap-3">
+          {job.photoUrls.map((url) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={url} src={url} alt="Marchandise" className="h-28 w-28 rounded-card object-cover border border-brand-border" />
+          ))}
+        </div>
+      )}
+
       {/* Bid form — visible to all carriers, but locked until APPROVED */}
       {job.status === 'PUBLISHED' && (
         <BidForm jobId={params.id} carrierStatus={user?.status} alreadyBid={alreadyBid} />

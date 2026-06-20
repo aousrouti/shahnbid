@@ -4,6 +4,7 @@ import { addAccount, emailExists } from '@/lib/demo-data/accounts';
 import { SESSION_COOKIE, createToken } from '@/lib/auth/session';
 import { addAdminNotification } from '@/lib/notifications/store';
 import { rateLimit, clientIp } from '@/lib/server/rate-limit';
+import { sendEmail } from '@/lib/email';
 
 export const runtime = 'nodejs';
 
@@ -47,6 +48,12 @@ export async function POST(req: Request) {
     body: `${account.companyName} — ${d.city}, ${d.country} · licence ${d.licenseNumber}`,
     link: '/admin/users',
   }, new Date().toISOString());
+
+  await sendEmail({
+    to: account.email,
+    subject: 'ShahnBid — inscription reçue',
+    text: `Bonjour ${account.fullName},\n\nVotre inscription transporteur (${account.companyName}) a bien été reçue et est en cours d'examen. Vous serez notifié dès qu'un administrateur l'aura approuvée.\n\n— L'équipe ShahnBid`,
+  });
 
   const token = await createToken({ id: account.id, role: 'CARRIER' });
   const res = NextResponse.json({ ok: true, redirect: '/carrier/dashboard' });

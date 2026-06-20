@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { getBid, acceptBid, setBidStatus } from '@/lib/server/bids-repo';
 import { getJobOwner } from '@/lib/server/jobs-repo';
+import { getAccountById } from '@/lib/demo-data/accounts';
+import { sendEmail } from '@/lib/email';
+import { getPayments } from '@/lib/payments';
+import { setJobPayment } from '@/lib/server/jobs-repo';
 
 export const runtime = 'nodejs';
 
@@ -53,5 +57,22 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     const error = result.reason === 'NOT_FOUND' ? 'Offre introuvable' : 'Cette offre ne peut plus être acceptée';
     return NextResponse.json({ error }, { status });
   }
+
+  // Authorize payment for the agreed amount (best-effort) and notify the carrier.
+  try {
+    const intent = await getPayments().authorize({ jobId: bid.jobId, amountMAD: result.bid.priceMAD });
+    await setJobPayment(bid.jobId, intent.ref, intent.status);
+  } catch (e) {
+    console.error('[payments] authorize failed:', e);
+  }
+  const carrier = await getAccountById(result.bid.carrier.id);
+  if (carrier) {
+    await sendEmail({
+      to: carrier.email,
+      subject: 'ShahnBid — votre offre a été acceptée',
+      text: `Bonjour ${carrier.fullName},\n\nVotre offre de ${result.bid.priceMAD} MAD a été acceptée. Vous pouvez démarrer la livraison et mettre à jour le statut depuis votre espace.\n\n— L'équipe ShahnBid`,
+    });
+  }
+
   return NextResponse.json({ ok: true, bid: result.bid });
 }

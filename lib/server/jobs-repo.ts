@@ -2,6 +2,7 @@
 import { prisma } from '@/lib/prisma';
 import { mapBid } from './bids-repo';
 import { getPricingSettings, commissionAmount } from '@/lib/pricing/store';
+import { getPayments } from '@/lib/payments';
 import type {
   JobSummary, JobDetail, JobStatus, JobSource, CargoType, ClientType, PostJobPayload,
 } from '@/lib/types';
@@ -22,8 +23,14 @@ function toSummary(j: Job, bidCount: number): JobSummary {
     agreedPriceMAD: j.agreedPriceMAD ?? undefined,
     commissionRateSnap: j.commissionRateSnap ?? undefined,
     commissionCapturedMAD: j.commissionCapturedMAD ?? undefined,
+    paymentStatus: j.paymentStatus ?? undefined,
     createdAt: j.createdAt.toISOString(),
   };
+}
+
+/** Record the payment intent ref + status on a job (set at acceptance/capture). */
+export async function setJobPayment(jobId: string, paymentRef: string, paymentStatus: string): Promise<void> {
+  await prisma.job.update({ where: { id: jobId }, data: { paymentRef, paymentStatus } });
 }
 
 export interface JobFilter {
@@ -108,7 +115,7 @@ export async function createJob(input: CreateJobInput, id: string): Promise<JobS
       pickupDateTo: input.pickupDateTo ? new Date(input.pickupDateTo) : null,
       deliveryDate: new Date(input.deliveryDate),
       notes: input.notes,
-      photoUrls: '[]',
+      photoUrls: JSON.stringify(input.photoUrls ?? []),
     },
   });
   return toSummary(j, 0);
@@ -141,15 +148,24 @@ export async function advanceJobStatus(jobId: string, target: JobStatus): Promis
   if ((NEXT_STATUS[j.status as JobStatus] ?? null) !== target) return { ok: false, reason: 'INVALID_TRANSITION' };
 
   let commissionCapturedMAD: number | undefined;
+  let paymentStatus: string | undefined;
   if (target === 'COMPLETED') {
     const s = await getPricingSettings();
     const rate = j.commissionRateSnap ?? s.commissionRate;
     commissionCapturedMAD = commissionAmount(j.agreedPriceMAD ?? 0, { ...s, commissionRate: rate });
+    // Capture the held payment (best-effort).
+    if (j.paymentRef) {
+      try {
+        paymentStatus = (await getPayments().capture(j.paymentRef)).status;
+      } catch (e) {
+        console.error('[payments] capture failed:', e);
+      }
+    }
   }
 
   const updated = await prisma.job.update({
     where: { id: jobId },
-    data: { status: target, commissionCapturedMAD },
+    data: { status: target, commissionCapturedMAD, paymentStatus },
     include: { _count: { select: { bids: { where: { status: { not: 'WITHDRAWN' } } } } } },
   });
   return { ok: true, job: toSummary(updated, updated._count.bids) };

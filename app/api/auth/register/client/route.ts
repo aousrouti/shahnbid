@@ -4,6 +4,7 @@ import { addAccount, emailExists } from '@/lib/demo-data/accounts';
 import { SESSION_COOKIE, createToken } from '@/lib/auth/session';
 import { addAdminNotification } from '@/lib/notifications/store';
 import { rateLimit, clientIp } from '@/lib/server/rate-limit';
+import { sendEmail } from '@/lib/email';
 
 export const runtime = 'nodejs';
 
@@ -46,6 +47,12 @@ export async function POST(req: Request) {
     body: `${account.companyName || account.fullName} — ${d.city}, ${d.country}`,
     link: '/admin/users',
   }, new Date().toISOString());
+
+  await sendEmail({
+    to: account.email,
+    subject: 'Bienvenue sur ShahnBid',
+    text: `Bonjour ${account.fullName},\n\nVotre compte chargeur ShahnBid a été créé. Vous pouvez publier vos expéditions dès maintenant.\n\n— L'équipe ShahnBid`,
+  });
 
   const token = await createToken({ id: account.id, role: 'CLIENT' });
   const res = NextResponse.json({ ok: true, redirect: '/client/dashboard' });

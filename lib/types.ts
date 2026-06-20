@@ -51,6 +51,7 @@ export interface JobSummary {
   agreedPriceMAD?: number;
   commissionRateSnap?: number;     // rate locked in at bid acceptance
   commissionCapturedMAD?: number;  // realized when the job reaches COMPLETED
+  paymentStatus?: string;          // AUTHORIZED | CAPTURED | FAILED
   createdAt: string;
 }
 
@@ -123,6 +124,7 @@ export interface PostJobPayload {
   pickupDateTo: string;
   deliveryDate: string;
   notes?: string;
+  photoUrls?: string[];
 }
 
 export interface SubmitBidPayload {

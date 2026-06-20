@@ -90,6 +90,8 @@ model Job {
   acceptedBidId         String? @db.NVarChar(50)
   commissionRateSnap    Float?
   commissionCapturedMAD Int?
+  paymentRef            String? @db.NVarChar(100)   // provider intent ref (stub/Stripe)
+  paymentStatus         String? @db.NVarChar(20)    // AUTHORIZED | CAPTURED | FAILED
 
   bids      Bid[]    @relation("JobBids")
   createdAt DateTime @default(now())
