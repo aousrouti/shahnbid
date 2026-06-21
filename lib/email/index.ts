@@ -21,6 +21,29 @@ class ConsoleEmail implements EmailProvider {
   }
 }
 
+class SmtpEmail implements EmailProvider {
+  readonly name = 'smtp';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private transporter: any;
+  constructor(private opts: { host: string; port: number; user: string; pass: string; from: string }) {}
+  private async tx() {
+    if (!this.transporter) {
+      const nodemailer = await import('nodemailer');
+      this.transporter = nodemailer.createTransport({
+        host: this.opts.host,
+        port: this.opts.port,
+        secure: this.opts.port === 465,
+        auth: { user: this.opts.user, pass: this.opts.pass },
+      });
+    }
+    return this.transporter;
+  }
+  async send(m: EmailMessage): Promise<void> {
+    const t = await this.tx();
+    await t.sendMail({ from: this.opts.from, to: m.to, subject: m.subject, text: m.text });
+  }
+}
+
 class ResendEmail implements EmailProvider {
   readonly name = 'resend';
   constructor(private key: string, private from: string) {}
@@ -41,9 +64,16 @@ let provider: EmailProvider | null = null;
 
 export function getEmailProvider(): EmailProvider {
   if (provider) return provider;
-  const key = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM || 'ShahnBid <noreply@shahnbid.ma>';
-  provider = key ? new ResendEmail(key, from) : new ConsoleEmail();
+  const from = process.env.EMAIL_FROM || 'ShahnBid <onboarding@resend.dev>';
+  const { SMTP_HOST, SMTP_USER, SMTP_PASS, RESEND_API_KEY } = process.env;
+  if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+    // SMTP via your own provider (e.g. Gmail) — lets you send from a personal address.
+    provider = new SmtpEmail({ host: SMTP_HOST, port: Number(process.env.SMTP_PORT) || 465, user: SMTP_USER, pass: SMTP_PASS, from });
+  } else if (RESEND_API_KEY) {
+    provider = new ResendEmail(RESEND_API_KEY, from);
+  } else {
+    provider = new ConsoleEmail();
+  }
   return provider;
 }
 
