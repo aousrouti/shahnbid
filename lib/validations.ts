@@ -59,6 +59,19 @@ export const postJobSchema = z.object({
   { message: 'Date de fin avant date de début', path: ['pickupDateTo'] },
 );
 
+// Profile self-edit (email/role/status/clientType are NOT editable here).
+export const profileUpdateSchema = z.object({
+  fullName:        z.string().min(2, 'Nom requis'),
+  phone:           z.string().regex(/^\+?[0-9][0-9\s().-]{6,19}$/, 'Numéro invalide'),
+  country:         z.string().min(2).optional(),
+  city:            z.string().min(2).optional(),
+  companyName:     z.string().optional(),
+  ice:             z.string().optional(),
+  address:         z.string().optional(),
+  licenseNumber:   z.string().optional(),
+  insuranceExpiry: z.string().optional(),
+});
+
 export const submitBidSchema = z.object({
   priceMAD:    z.number().min(100, 'Prix minimum 100 MAD'),
   etaDays:     z.number().int().min(1).max(30),

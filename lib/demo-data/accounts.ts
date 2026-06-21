@@ -60,6 +60,15 @@ function toPublic(p: Profile): PublicAccount {
   };
 }
 
+/** Editable profile fields (self-service). Undefined values are left unchanged. */
+export type ProfilePatch = Partial<Pick<DemoAccount,
+  'fullName' | 'phone' | 'country' | 'city' | 'companyName' | 'ice' | 'address' | 'licenseNumber' | 'insuranceExpiry'>>;
+
+export async function updateProfile(id: string, patch: ProfilePatch): Promise<PublicAccount | null> {
+  const p = await prisma.profile.update({ where: { id }, data: patch }).catch(() => null);
+  return p ? toPublic(p) : null;
+}
+
 /** Update the current user's notification channel preferences. */
 export async function updateNotificationPrefs(id: string, prefs: NotificationPrefs): Promise<PublicAccount | null> {
   const p = await prisma.profile.update({
