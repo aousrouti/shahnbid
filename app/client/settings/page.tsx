@@ -1,4 +1,5 @@
 import PageHeader from '@/components/shared/PageHeader';
+import NotificationPreferences from '@/components/shared/NotificationPreferences';
 import { mockClientProfile } from '@/lib/mock-data/users';
 import { CLIENT_TYPE_LABELS } from '@/lib/constants';
 
@@ -36,6 +37,8 @@ export default function ClientSettingsPage() {
           </button>
         </div>
       </div>
+
+      <NotificationPreferences />
     </div>
   );
 }

@@ -48,6 +48,10 @@ model Profile {
   status          String?   @db.NVarChar(20)   // PENDING | APPROVED | REJECTED | SUSPENDED
   licenseNumber   String?   @db.NVarChar(100)
   insuranceExpiry String?   @db.NVarChar(40)
+  // Notification channel preferences (WhatsApp off by default — opt-in/consent)
+  notifyInApp    Boolean @default(true)
+  notifyEmail    Boolean @default(true)
+  notifyWhatsapp Boolean @default(false)
   createdAt    DateTime @default(now())
 
   jobs          Job[]                 @relation("ClientJobs")

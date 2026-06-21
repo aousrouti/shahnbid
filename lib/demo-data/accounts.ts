@@ -21,7 +21,16 @@ export interface DemoAccount {
   status?: CarrierStatus;
   licenseNumber?: string;
   insuranceExpiry?: string;
+  notifyInApp?: boolean;
+  notifyEmail?: boolean;
+  notifyWhatsapp?: boolean;
   createdAt?: string;
+}
+
+export interface NotificationPrefs {
+  notifyInApp: boolean;
+  notifyEmail: boolean;
+  notifyWhatsapp: boolean;
 }
 
 export type PublicAccount = Omit<DemoAccount, 'passwordHash'>;
@@ -44,8 +53,20 @@ function toPublic(p: Profile): PublicAccount {
     status: (p.status as CarrierStatus) ?? undefined,
     licenseNumber: p.licenseNumber ?? undefined,
     insuranceExpiry: p.insuranceExpiry ?? undefined,
+    notifyInApp: p.notifyInApp,
+    notifyEmail: p.notifyEmail,
+    notifyWhatsapp: p.notifyWhatsapp,
     createdAt: p.createdAt.toISOString(),
   };
+}
+
+/** Update the current user's notification channel preferences. */
+export async function updateNotificationPrefs(id: string, prefs: NotificationPrefs): Promise<PublicAccount | null> {
+  const p = await prisma.profile.update({
+    where: { id },
+    data: { notifyInApp: prefs.notifyInApp, notifyEmail: prefs.notifyEmail, notifyWhatsapp: prefs.notifyWhatsapp },
+  }).catch(() => null);
+  return p ? toPublic(p) : null;
 }
 
 export async function findByCredentials(email: string, password: string): Promise<PublicAccount | null> {

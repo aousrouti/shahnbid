@@ -1,4 +1,5 @@
 import PageHeader from '@/components/shared/PageHeader';
+import NotificationPreferences from '@/components/shared/NotificationPreferences';
 import { mockApprovedCarrier } from '@/lib/mock-data/users';
 
 export default function CarrierSettingsPage() {
@@ -30,6 +31,8 @@ export default function CarrierSettingsPage() {
           </span>
         </div>
       </div>
+
+      <NotificationPreferences />
     </div>
   );
 }
