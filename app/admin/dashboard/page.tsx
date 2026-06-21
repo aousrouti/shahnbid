@@ -2,6 +2,7 @@ import KpiCard from '@/components/shared/KpiCard';
 import PageHeader from '@/components/shared/PageHeader';
 import AdminNotifications from '@/components/admin/AdminNotifications';
 import EmailTester from '@/components/admin/EmailTester';
+import WhatsAppTester from '@/components/admin/WhatsAppTester';
 import { listJobs } from '@/lib/server/jobs-repo';
 import { listCarriers } from '@/lib/demo-data/accounts';
 import { getPricingSettings, commissionAmount } from '@/lib/pricing/store';
@@ -33,7 +34,10 @@ export default async function AdminDashboardPage() {
 
       <AdminNotifications />
 
-      <EmailTester defaultTo={user?.email ?? ''} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <EmailTester defaultTo={user?.email ?? ''} />
+        <WhatsAppTester defaultTo={user?.phone ?? ''} />
+      </div>
 
       {/* Quick stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
