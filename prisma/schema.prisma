@@ -1,58 +1,52 @@
-// ShahnBid data model — SQL Server (Express) target.
+// ShahnBid data model — PostgreSQL (Neon / Vercel Postgres).
 //
-// Provider is sqlserver for now; the user may switch to postgresql later. To keep
-// that switch cheap, this schema sticks to the portable subset:
-//   - enums are modeled as String (SQL Server has no native enum in Prisma)
-//   - the photo list is stored as a JSON string (no scalar arrays on SQL Server)
-//   - string keys / indexed string columns are length-bounded (SQL Server caps
-//     index keys at 900 bytes; unbounded NVARCHAR(1000) keys would overflow)
-//
-// The app already validates these string fields against TS unions, so String
-// columns are safe. Allowed values are noted in comments next to each field.
+// Migrated from SQL Server: provider is now postgresql and the SQL-Server-specific
+// @db.NVarChar(...) annotations are removed (Postgres String → text, no 900-byte
+// index limit). Enums stay as String and the photo list stays a JSON string, so the
+// data-access layer (lib/server/*-repo.ts) is unchanged.
 //
 // Bring-up:
-//   1. Enable TCP/IP + mixed-mode auth, create the `shahnbid` DB + login (elevated script).
-//   2. Set DATABASE_URL in .env.local.
-//   3. npx prisma migrate dev --name init
-//   4. Repo layer (lib/server/*-repo.ts) swaps from the in-memory maps to `prisma`.
+//   1. Create a Neon project (free) and copy its connection string.
+//   2. Set DATABASE_URL in .env (and on Vercel). For serverless, use Neon's pooled
+//      string, e.g. ...-pooler.../db?sslmode=require&connection_limit=1
+//   3. npx prisma db push   (or migrate dev)
+//   4. npx tsx prisma/seed.ts
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlserver"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // pooled (runtime / serverless)
+  directUrl = env("DIRECT_URL")   // direct (migrations / db push)
 }
 
 // ───────────────────────────── Accounts ──────────────────────────────
 
-// Flat account table matching the app's PublicAccount shape (client- and
-// carrier-specific fields are nullable columns). Simpler 1:1 mapping than a
-// normalized split, and the app already validates each field against TS unions.
 model Profile {
-  id           String   @id @db.NVarChar(50)
-  role         String   @db.NVarChar(20)   // CLIENT | CARRIER | ADMIN
-  email        String   @unique @db.NVarChar(255)
-  passwordHash String   @db.NVarChar(255)
-  fullName     String   @db.NVarChar(200)
-  phone        String?  @db.NVarChar(40)
-  country      String?  @db.NVarChar(100)
-  city         String?  @db.NVarChar(100)
+  id           String   @id
+  role         String   // CLIENT | CARRIER | ADMIN
+  email        String   @unique
+  passwordHash String
+  fullName     String
+  phone        String?
+  country      String?
+  city         String?
   // Client-only
-  clientType   String?  @db.NVarChar(20)   // INDIVIDUAL | BUSINESS
-  companyName  String?  @db.NVarChar(200)
-  ice          String?  @db.NVarChar(20)
-  address      String?  @db.NVarChar(400)
+  clientType   String?  // INDIVIDUAL | BUSINESS
+  companyName  String?
+  ice          String?
+  address      String?
   // Carrier-only
-  status          String?   @db.NVarChar(20)   // PENDING | APPROVED | REJECTED | SUSPENDED
-  licenseNumber   String?   @db.NVarChar(100)
-  insuranceExpiry String?   @db.NVarChar(40)
+  status          String?   // PENDING | APPROVED | REJECTED | SUSPENDED
+  licenseNumber   String?
+  insuranceExpiry String?
   // Notification channel preferences (WhatsApp off by default — opt-in/consent)
-  notifyInApp    Boolean @default(true)
-  notifyEmail    Boolean @default(true)
-  notifyWhatsapp Boolean @default(false)
-  acceptedTermsAt DateTime?   // when the user accepted the CGU at registration
+  notifyInApp     Boolean   @default(true)
+  notifyEmail     Boolean   @default(true)
+  notifyWhatsapp  Boolean   @default(false)
+  acceptedTermsAt DateTime?
   createdAt    DateTime @default(now())
 
   jobs          Job[]                 @relation("ClientJobs")
@@ -68,35 +62,32 @@ model Profile {
 // ──────────────────────────── Marketplace ────────────────────────────
 
 model Job {
-  id             String    @id @db.NVarChar(50)
+  id             String    @id
   client         Profile   @relation("ClientJobs", fields: [clientId], references: [id])
-  clientId       String    @db.NVarChar(50)
-  source         String    @default("CLIENT_POSTED") @db.NVarChar(20)  // CLIENT_POSTED | RETURN_TRIP
-  status         String    @default("PUBLISHED") @db.NVarChar(20)      // DRAFT|PUBLISHED|ACCEPTED|PICKED_UP|IN_TRANSIT|DELIVERED|COMPLETED|CANCELLED
-  cargoType      String    @db.NVarChar(20)   // GENERAL|REFRIGERATED|HAZMAT|FRAGILE|OVERSIZED|LIVESTOCK
-  description    String    @db.NVarChar(Max)
+  clientId       String
+  source         String    @default("CLIENT_POSTED") // CLIENT_POSTED | RETURN_TRIP
+  status         String    @default("PUBLISHED")     // DRAFT|PUBLISHED|ACCEPTED|PICKED_UP|IN_TRANSIT|DELIVERED|COMPLETED|CANCELLED
+  cargoType      String    // GENERAL|REFRIGERATED|HAZMAT|FRAGILE|OVERSIZED|LIVESTOCK
+  description    String
   weightKg       Int
   fragile        Boolean   @default(false)
   hazmat         Boolean   @default(false)
-  originCity     String    @db.NVarChar(100)
-  originAddress  String    @db.NVarChar(400)
-  destCity       String    @db.NVarChar(100)
-  destAddress    String    @db.NVarChar(400)
+  originCity     String
+  originAddress  String
+  destCity       String
+  destAddress    String
   pickupDateFrom DateTime
   pickupDateTo   DateTime?
   deliveryDate   DateTime
-  notes          String?   @db.NVarChar(Max)
-  photoUrls      String    @default("[]") @db.NVarChar(Max)  // JSON array of URLs
+  notes          String?
+  photoUrls      String    @default("[]") // JSON array of URLs
 
-  // Set when a bid is accepted. The rate is snapshotted so later pricing
-  // changes never rewrite historical earnings. acceptedBidId is a plain column
-  // (SQL Server UNIQUE allows only one NULL row, which would break multi-job inserts).
   agreedPriceMAD        Int?
-  acceptedBidId         String? @db.NVarChar(50)
+  acceptedBidId         String?
   commissionRateSnap    Float?
   commissionCapturedMAD Int?
-  paymentRef            String? @db.NVarChar(100)   // provider intent ref (stub/Stripe)
-  paymentStatus         String? @db.NVarChar(20)    // AUTHORIZED | CAPTURED | FAILED
+  paymentRef            String?
+  paymentStatus         String?   // AUTHORIZED | CAPTURED | FAILED
 
   bids      Bid[]    @relation("JobBids")
   createdAt DateTime @default(now())
@@ -107,16 +98,16 @@ model Job {
 }
 
 model Bid {
-  id          String   @id @db.NVarChar(50)
+  id          String   @id
   job         Job      @relation("JobBids", fields: [jobId], references: [id], onDelete: Cascade)
-  jobId       String   @db.NVarChar(50)
-  carrier     Profile  @relation("CarrierBids", fields: [carrierId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  carrierId   String   @db.NVarChar(50)
+  jobId       String
+  carrier     Profile  @relation("CarrierBids", fields: [carrierId], references: [id])
+  carrierId   String
   priceMAD    Int
   etaDays     Int
-  vehicleType String   @db.NVarChar(60)
-  notes       String?  @db.NVarChar(Max)
-  status      String   @default("PENDING") @db.NVarChar(20)   // PENDING | ACCEPTED | REJECTED | WITHDRAWN
+  vehicleType String
+  notes       String?
+  status      String   @default("PENDING") // PENDING | ACCEPTED | REJECTED | WITHDRAWN
   createdAt   DateTime @default(now())
 
   @@unique([jobId, carrierId]) // one active bid per carrier per job
@@ -125,17 +116,17 @@ model Bid {
 }
 
 model ReturnTrip {
-  id             String   @id @db.NVarChar(50)
+  id             String   @id
   carrier        Profile  @relation("CarrierReturns", fields: [carrierId], references: [id])
-  carrierId      String   @db.NVarChar(50)
-  originCity     String   @db.NVarChar(100)
-  destCity       String   @db.NVarChar(100)
+  carrierId      String
+  originCity     String
+  destCity       String
   availableDate  DateTime
   capacityKg     Int
-  vehicleType    String   @db.NVarChar(60)
+  vehicleType    String
   listedPriceMAD Int
-  notes          String?  @db.NVarChar(Max)
-  status         String   @default("OPEN") @db.NVarChar(20)   // OPEN | BOOKED | EXPIRED | CANCELLED
+  notes          String?
+  status         String   @default("OPEN") // OPEN | BOOKED | EXPIRED | CANCELLED
   createdAt      DateTime @default(now())
 
   @@index([status])
@@ -144,24 +135,23 @@ model ReturnTrip {
 
 // ───────────────────────────── Platform ──────────────────────────────
 
-// Single-row table holding the admin-editable pricing rules.
 model PricingSettings {
   id               Int      @id @default(1)
   commissionRate   Float    @default(0.10)
   minCommissionMAD Int      @default(50)
   vatRate          Float    @default(0.20)
   minJobPriceMAD   Int      @default(100)
-  commissionPayer  String   @default("CARRIER") @db.NVarChar(20)  // CARRIER | CLIENT
-  updatedBy        String   @default("système") @db.NVarChar(255)
+  commissionPayer  String   @default("CARRIER") // CARRIER | CLIENT
+  updatedBy        String   @default("système")
   updatedAt        DateTime @updatedAt
 }
 
 model AdminNotification {
-  id        String   @id @db.NVarChar(50)
-  type      String   @db.NVarChar(30)   // NEW_CARRIER | NEW_CLIENT
-  title     String   @db.NVarChar(200)
-  body      String   @db.NVarChar(Max)
-  link      String   @db.NVarChar(400)
+  id        String   @id
+  type      String   // NEW_CARRIER | NEW_CLIENT | NEW_JOB | NEW_BID
+  title     String
+  body      String
+  link      String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
@@ -170,12 +160,12 @@ model AdminNotification {
 
 // Per-user in-app notification feed (clients and carriers alike).
 model Notification {
-  id        String   @id @db.NVarChar(50)
+  id        String   @id
   user      Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String   @db.NVarChar(50)
-  type      String   @db.NVarChar(40)
-  title     String   @db.NVarChar(200)
-  body      String   @db.NVarChar(Max)
+  userId    String
+  type      String
+  title     String
+  body      String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
@@ -183,12 +173,12 @@ model Notification {
 }
 
 model PushSubscription {
-  id        String   @id @default(cuid()) @db.NVarChar(50)
+  id        String   @id @default(cuid())
   user      Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String   @db.NVarChar(50)
-  endpoint  String   @db.NVarChar(Max)   // browser endpoint URLs can exceed index-key limits
-  p256dh    String   @db.NVarChar(Max)
-  auth      String   @db.NVarChar(200)
+  userId    String
+  endpoint  String
+  p256dh    String
+  auth      String
   createdAt DateTime @default(now())
 
   @@index([userId])
