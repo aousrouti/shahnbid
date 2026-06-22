@@ -85,6 +85,22 @@ export async function getJobDetail(id: string): Promise<JobDetail | null> {
   };
 }
 
+export type CancelResult =
+  | { ok: true }
+  | { ok: false; reason: 'NOT_FOUND' | 'NOT_CANCELLABLE' };
+
+/** Cancel a still-open job (PUBLISHED) and reject its pending bids. */
+export async function cancelJob(jobId: string): Promise<CancelResult> {
+  const j = await prisma.job.findUnique({ where: { id: jobId }, select: { status: true } });
+  if (!j) return { ok: false, reason: 'NOT_FOUND' };
+  if (j.status !== 'PUBLISHED') return { ok: false, reason: 'NOT_CANCELLABLE' };
+  await prisma.$transaction([
+    prisma.bid.updateMany({ where: { jobId, status: 'PENDING' }, data: { status: 'REJECTED' } }),
+    prisma.job.update({ where: { id: jobId }, data: { status: 'CANCELLED' } }),
+  ]);
+  return { ok: true };
+}
+
 /** Who owns a job (for accept/reject authorization). */
 export async function getJobOwner(id: string): Promise<string | null> {
   const j = await prisma.job.findUnique({ where: { id }, select: { clientId: true } });

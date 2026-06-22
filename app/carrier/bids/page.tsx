@@ -3,6 +3,7 @@ import PageHeader from '@/components/shared/PageHeader';
 import EmptyState from '@/components/shared/EmptyState';
 import { listBidsForCarrier } from '@/lib/server/bids-repo';
 import { getCurrentUser } from '@/lib/auth/current-user';
+import ActionButton from '@/components/shared/ActionButton';
 import { formatMAD, formatDate } from '@/lib/utils';
 import { Truck, Clock } from 'lucide-react';
 
@@ -52,6 +53,7 @@ export default async function CarrierBidsPage() {
                 <th className="text-left px-5 py-3 font-medium text-gray-600">Délai</th>
                 <th className="text-left px-5 py-3 font-medium text-gray-600">Statut</th>
                 <th className="text-left px-5 py-3 font-medium text-gray-600">Soumise</th>
+                <th className="text-left px-5 py-3 font-medium text-gray-600">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-brand-border">
@@ -73,6 +75,17 @@ export default async function CarrierBidsPage() {
                     </span>
                   </td>
                   <td className="px-5 py-3 text-gray-400">{formatDate(bid.createdAt)}</td>
+                  <td className="px-5 py-3">
+                    {bid.status === 'PENDING' && (
+                      <ActionButton
+                        url={`/api/bids/${bid.id}`}
+                        body={{ action: 'WITHDRAW' }}
+                        label="Retirer"
+                        confirm="Retirer cette offre ?"
+                        variant="subtle"
+                      />
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

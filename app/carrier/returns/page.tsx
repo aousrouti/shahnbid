@@ -3,6 +3,7 @@ import PageHeader from '@/components/shared/PageHeader';
 import EmptyState from '@/components/shared/EmptyState';
 import { listReturnTrips } from '@/lib/server/returns-repo';
 import { getCurrentUser } from '@/lib/auth/current-user';
+import ActionButton from '@/components/shared/ActionButton';
 import { formatDate, formatWeight, formatMAD } from '@/lib/utils';
 import { Plus, MapPin, RotateCcw } from 'lucide-react';
 
@@ -58,6 +59,7 @@ export default async function CarrierReturnsPage() {
                 <th className="text-left px-5 py-3 font-medium text-gray-600">Capacité</th>
                 <th className="text-left px-5 py-3 font-medium text-gray-600">Prix</th>
                 <th className="text-left px-5 py-3 font-medium text-gray-600">Statut</th>
+                <th className="text-left px-5 py-3 font-medium text-gray-600">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-brand-border">
@@ -76,6 +78,17 @@ export default async function CarrierReturnsPage() {
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-badge text-xs font-medium ${STATUS_STYLES[trip.status]}`}>
                       {STATUS_LABELS[trip.status]}
                     </span>
+                  </td>
+                  <td className="px-5 py-3">
+                    {trip.status === 'OPEN' && (
+                      <ActionButton
+                        url={`/api/returns/${trip.id}`}
+                        body={{ action: 'CANCEL' }}
+                        label="Annuler"
+                        confirm="Annuler ce retour ?"
+                        variant="subtle"
+                      />
+                    )}
                   </td>
                 </tr>
               ))}

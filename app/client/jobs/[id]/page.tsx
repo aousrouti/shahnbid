@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import StatusBadge from '@/components/jobs/StatusBadge';
 import JobBidsList from '@/components/bids/JobBidsList';
 import JobStatusActions from '@/components/jobs/JobStatusActions';
+import ActionButton from '@/components/shared/ActionButton';
 import { getJobDetail, getJobOwner } from '@/lib/server/jobs-repo';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { formatDate, formatWeight, formatMAD, clientDisplayName } from '@/lib/utils';
@@ -78,6 +79,19 @@ export default async function ClientJobDetailPage({ params }: { params: { id: st
           <span>{job.client.phone}</span>
         </div>
       </div>
+
+      {/* Cancel (owner, while still open) */}
+      {job.status === 'PUBLISHED' && (
+        <div className="flex justify-end">
+          <ActionButton
+            url={`/api/jobs/${params.id}`}
+            body={{ action: 'CANCEL' }}
+            label="Annuler l'expédition"
+            confirm="Annuler cette expédition ? Les offres en attente seront refusées."
+            variant="danger"
+          />
+        </div>
+      )}
 
       {/* Cargo photos */}
       {job.photoUrls.length > 0 && (
