@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShahnBid — App Map (Swim Lanes)</title>
+<style>
+  :root{
+    --navy:#0f2747; --blue:#1A56A3; --blue-bg:#e8f0fb; --ink:#1f2937; --muted:#6b7280;
+    --line:#dfe5ee; --bg:#f6f8fb; --card:#fff;
+    --client:#1A56A3; --client-bg:#e8f0fb;
+    --carrier:#0f7a52; --carrier-bg:#e3f5ec;
+    --admin:#7b3fb0; --admin-bg:#f1e9fb;
+    --sys:#64748b; --sys-bg:#eef1f5;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.45;padding:28px 16px 64px}
+  .wrap{max-width:1180px;margin:0 auto}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--blue)}
+  h1{font-size:27px;margin:4px 0 6px;color:var(--navy);letter-spacing:-.02em}
+  .sub{color:var(--muted);font-size:14.5px;max-width:760px}
+  .legend{display:flex;flex-wrap:wrap;gap:9px;margin:18px 0 8px}
+  .chip{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:#fff}
+  .sw{width:9px;height:9px;border-radius:3px}
+  h2.flow{font-size:15px;color:var(--navy);margin:30px 0 4px;display:flex;align-items:center;gap:8px}
+  h2.flow .n{display:inline-flex;width:22px;height:22px;border-radius:6px;background:var(--blue);color:#fff;font-size:12px;align-items:center;justify-content:center;font-weight:800}
+  .flowdesc{font-size:13px;color:var(--muted);margin:0 0 12px}
+
+  .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--card);padding:0}
+  .grid{display:grid;gap:10px;padding:14px;min-width:760px}
+  .lane-label{display:flex;align-items:center;gap:8px;font-weight:700;font-size:12.5px;border-radius:9px;padding:8px 10px;color:#fff;position:sticky;left:14px;z-index:2}
+  .l-client{background:var(--client)} .l-carrier{background:var(--carrier)}
+  .l-admin{background:var(--admin)} .l-sys{background:var(--sys)}
+  .lane-bg{border-radius:9px}
+  .step{border-radius:10px;padding:8px 10px;font-size:12.5px;border:1px solid var(--line);position:relative}
+  .step .num{position:absolute;top:-8px;left:-8px;width:20px;height:20px;border-radius:50%;background:var(--navy);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+  .step .t{font-weight:650;color:var(--navy)}
+  .step .d{color:var(--muted);font-size:11px;margin-top:2px}
+  .step.action{background:var(--blue-bg);border-color:#cfe0f5}
+  .step.action.carrier{background:var(--carrier-bg);border-color:#bfe6d2}
+  .step.action.admin{background:var(--admin-bg);border-color:#e2cdf3}
+  .step.sys{background:var(--sys-bg);border-color:#dde3ea}
+  .edit{display:inline-block;margin-top:4px;font-size:10px;font-weight:700;color:var(--blue);background:#fff;border:1px solid #cfe0f5;border-radius:5px;padding:1px 5px}
+
+  .xc{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:14px}
+  .xcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+  .xcard h3{margin:0 0 4px;font-size:13.5px;color:var(--navy)}
+  .xcard p{margin:0;font-size:12.5px;color:var(--muted)}
+  .xcard ul{margin:6px 0 0;padding-left:16px;font-size:12.5px}
+  .foot{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+  .foot b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">ShahnBid · Freight Marketplace</div>
+  <h1>Application Map — Swim Lanes</h1>
+  <p class="sub">End-to-end flows across the four actors. Steps marked <b>Action</b> are user-driven and editable/manageable in the UI; <b>Auto</b> steps are performed by the platform (persistence, matching, notifications, payment, commission).</p>
+
+  <div class="legend">
+    <span class="chip"><span class="sw" style="background:var(--client)"></span>Client (Chargeur)</span>
+    <span class="chip"><span class="sw" style="background:var(--carrier)"></span>Transporteur</span>
+    <span class="chip"><span class="sw" style="background:var(--admin)"></span>Admin</span>
+    <span class="chip"><span class="sw" style="background:var(--sys)"></span>Système (auto)</span>
+    <span class="chip"><span class="edit" style="margin:0">✎ modifiable</span></span>
+  </div>
+
+  <!-- FLOW 1: Onboarding -->
+  <h2 class="flow"><span class="n">1</span>Inscription &amp; approbation</h2>
+  <p class="flowdesc">Création de compte, et approbation des transporteurs avant qu'ils ne puissent soumettre des offres.</p>
+  <div class="scroll"><div class="grid" style="grid-template-columns:130px repeat(5,minmax(150px,1fr));grid-auto-rows:auto">
+    <!-- lane labels col 1 -->
+    <div class="lane-label l-client" style="grid-column:1;grid-row:1">Client</div>
+    <div class="lane-label l-carrier" style="grid-column:1;grid-row:2">Transporteur</div>
+    <div class="lane-label l-admin" style="grid-column:1;grid-row:3">Admin</div>
+    <div class="lane-label l-sys" style="grid-column:1;grid-row:4">Système</div>
+    <!-- steps -->
+    <div class="step action" style="grid-column:2;grid-row:1"><span class="num">1</span><div class="t">S'inscrire (B2C/B2B)</div><span class="edit">✎ profil</span></div>
+    <div class="step action carrier" style="grid-column:2;grid-row:2"><span class="num">1</span><div class="t">S'inscrire</div><span class="edit">✎ profil</span></div>
+    <div class="step sys" style="grid-column:3;grid-row:4"><span class="num">2</span><div class="t">Créer compte (hash mot de passe)</div><div class="d">+ email bienvenue, notifier admin</div></div>
+    <div class="step action admin" style="grid-column:4;grid-row:3"><span class="num">3</span><div class="t">Approuver / Refuser / Suspendre</div><span class="edit">✎ /admin/users</span></div>
+    <div class="step sys" style="grid-column:5;grid-row:4"><span class="num">4</span><div class="t">Notifier le transporteur</div><div class="d">in-app · email · WhatsApp</div></div>
+    <div class="step action carrier" style="grid-column:6;grid-row:2"><span class="num">5</span><div class="t">Accès débloqué</div><div class="d">peut soumettre des offres</div></div>
+  </div></div>
+
+  <!-- FLOW 2: Marketplace -->
+  <h2 class="flow"><span class="n">2</span>Place de marché : expédition → livraison → règlement</h2>
+  <p class="flowdesc">Le cœur transactionnel : un chargeur publie, les transporteurs enchérissent, le chargeur accepte, le transporteur livre, le paiement &amp; la commission sont réglés.</p>
+  <div class="scroll"><div class="grid" style="grid-template-columns:130px repeat(9,minmax(140px,1fr));grid-auto-rows:auto">
+    <div class="lane-label l-client" style="grid-column:1;grid-row:1">Client</div>
+    <div class="lane-label l-carrier" style="grid-column:1;grid-row:2">Transporteur</div>
+    <div class="lane-label l-admin" style="grid-column:1;grid-row:3">Admin</div>
+    <div class="lane-label l-sys" style="grid-column:1;grid-row:4">Système</div>
+
+    <div class="step action" style="grid-column:2;grid-row:1"><span class="num">1</span><div class="t">Publier l'expédition</div><div class="d">+ photos</div><span class="edit">✎ créer / annuler</span></div>
+    <div class="step sys" style="grid-column:3;grid-row:4"><span class="num">2</span><div class="t">Matcher transporteurs (par ville) + notifier</div></div>
+    <div class="step action carrier" style="grid-column:4;grid-row:2"><span class="num">3</span><div class="t">Soumettre une offre</div><div class="d">plancher prix appliqué</div><span class="edit">✎ retirer</span></div>
+    <div class="step sys" style="grid-column:5;grid-row:4"><span class="num">4</span><div class="t">Notifier le client (nouvelle offre)</div></div>
+    <div class="step action" style="grid-column:6;grid-row:1"><span class="num">5</span><div class="t">Accepter une offre</div><span class="edit">✎ accepter / refuser</span></div>
+    <div class="step sys" style="grid-column:7;grid-row:4"><span class="num">6</span><div class="t">Refuser les autres · figer le taux · autoriser le paiement · notifier</div></div>
+    <div class="step action carrier" style="grid-column:8;grid-row:2"><span class="num">7</span><div class="t">Collecté → En transit → Livré</div><span class="edit">✎ faire avancer</span></div>
+    <div class="step action" style="grid-column:9;grid-row:1"><span class="num">8</span><div class="t">Confirmer la réception</div><span class="edit">✎ terminer</span></div>
+    <div class="step sys" style="grid-column:10;grid-row:4"><span class="num">9</span><div class="t">Capturer commission + TVA · notifier le transporteur</div></div>
+  </div></div>
+
+  <!-- FLOW 3: Returns -->
+  <h2 class="flow"><span class="n">3</span>Place de marché des retours (trajets à vide)</h2>
+  <p class="flowdesc">Un transporteur propose sa capacité de retour à prix fixe ; un chargeur la réserve, ce qui crée une expédition suivie qui rejoint le cycle de vie ci-dessus.</p>
+  <div class="scroll"><div class="grid" style="grid-template-columns:130px repeat(4,minmax(160px,1fr));grid-auto-rows:auto">
+    <div class="lane-label l-client" style="grid-column:1;grid-row:1">Client</div>
+    <div class="lane-label l-carrier" style="grid-column:1;grid-row:2">Transporteur</div>
+    <div class="lane-label l-sys" style="grid-column:1;grid-row:3">Système</div>
+
+    <div class="step action carrier" style="grid-column:2;grid-row:2"><span class="num">1</span><div class="t">Publier un retour</div><span class="edit">✎ créer / annuler</span></div>
+    <div class="step action" style="grid-column:3;grid-row:1"><span class="num">2</span><div class="t">Réserver le retour</div><span class="edit">✎ réserver</span></div>
+    <div class="step sys" style="grid-column:4;grid-row:3"><span class="num">3</span><div class="t">Créer une expédition suivie (RETURN_TRIP) · notifier</div></div>
+    <div class="step sys" style="grid-column:5;grid-row:3"><span class="num">4</span><div class="t">→ rejoint le cycle de vie (flux 2, étape 7)</div></div>
+  </div></div>
+
+  <!-- Cross-cutting -->
+  <h2 class="flow"><span class="n">×</span>Transversal</h2>
+  <div class="xc">
+    <div class="xcard">
+      <h3>Notifications (3 canaux)</h3>
+      <p>Chaque événement diffuse selon les préférences de l'utilisateur :</p>
+      <ul><li>🔔 In-app (cloche + flux)</li><li>✉️ Email (Brevo/SMTP)</li><li>💬 WhatsApp (Twilio) — opt-in</li></ul>
+      <span class="edit">✎ Paramètres → préférences</span>
+    </div>
+    <div class="xcard">
+      <h3>Tarification (Admin)</h3>
+      <p>Commission %, plancher, TVA, payeur, prix minimum.</p>
+      <span class="edit">✎ /admin/pricing</span>
+    </div>
+    <div class="xcard">
+      <h3>Profil &amp; préférences</h3>
+      <p>Chaque utilisateur édite ses infos et ses canaux de notification.</p>
+      <span class="edit">✎ /…/settings</span>
+    </div>
+    <div class="xcard">
+      <h3>Tableaux de bord</h3>
+      <p>KPIs en direct par rôle (offres, revenus, commission, statuts).</p>
+    </div>
+  </div>
+
+  <p class="foot">
+    <b>Pile :</b> Next.js 14 (App Router) · SQL Server via Prisma · adaptateurs email (Brevo/SMTP) · WhatsApp (Twilio) · paiements (stub→Stripe). &nbsp;
+    <b>Modifiable (✎) :</b> inscription, profil, préférences de notification, publier/annuler une expédition, soumettre/retirer une offre, accepter/refuser, faire avancer la livraison, terminer, publier/annuler/réserver un retour, approbation transporteur, tarification. &nbsp;
+    <b>Auto :</b> persistance, matching, notifications, figeage du taux, capture commission/TVA.
+  </p>
+</div>
+</body>
+</html>
