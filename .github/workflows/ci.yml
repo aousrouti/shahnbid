@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main, sqlserver-persistence]
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      # Generate the Prisma client (no DB connection needed for generate).
+      - run: npx prisma generate
+      - run: npm run lint
+      - run: npm run typecheck
+      # DB-backed integration tests self-skip when DATABASE_URL is unset; pure
+      # unit tests (hashing, pricing) still run.
+      - run: npm test
+      - run: npm run build
+        env:
+          # Build does not connect to the DB (pages are force-dynamic), but the
+          # Prisma datasource URL must be a syntactically valid value.
+          DATABASE_URL: "sqlserver://localhost:1433;database=ci;integratedSecurity=true;trustServerCertificate=true"

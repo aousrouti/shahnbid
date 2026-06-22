@@ -23,8 +23,7 @@ class ConsoleEmail implements EmailProvider {
 
 class SmtpEmail implements EmailProvider {
   readonly name = 'smtp';
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private transporter: any;
+  private transporter: import('nodemailer').Transporter | null = null;
   constructor(private opts: { host: string; port: number; user: string; pass: string; from: string }) {}
   private async tx() {
     if (!this.transporter) {
