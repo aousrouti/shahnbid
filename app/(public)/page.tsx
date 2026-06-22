@@ -79,8 +79,9 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-brand-border py-8 text-center text-sm text-gray-400">
-        © {new Date().getFullYear()} ShahnBid — Tous droits réservés
+      <footer className="border-t border-brand-border py-8 text-center text-sm text-gray-400 space-y-1">
+        <div>© {new Date().getFullYear()} ShahnBid — Tous droits réservés</div>
+        <Link href="/cgu" className="hover:text-brand-primary hover:underline">Conditions Générales d'Utilisation</Link>
       </footer>
     </div>
   );

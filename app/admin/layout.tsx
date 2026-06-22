@@ -1,5 +1,6 @@
 import AdminSidebar from '@/components/layout/AdminSidebar';
 import TopBar from '@/components/layout/TopBar';
+import Footer from '@/components/layout/Footer';
 import { getCurrentUser } from '@/lib/auth/current-user';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -10,6 +11,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar userName={user?.fullName ?? 'Admin ShahnBid'} role="Administrateur" notifScope="admin" />
         <main className="flex-1 p-6">{children}</main>
+        <Footer />
       </div>
     </div>
   );

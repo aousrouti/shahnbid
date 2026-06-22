@@ -3,6 +3,7 @@ import TopBar from '@/components/layout/TopBar';
 import { LocationProvider } from '@/components/carrier/LocationProvider';
 import LocationStatusBar from '@/components/carrier/LocationStatusBar';
 import CarrierStatusBanner from '@/components/carrier/CarrierStatusBanner';
+import Footer from '@/components/layout/Footer';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { mockApprovedCarrier } from '@/lib/mock-data/users';
 
@@ -17,6 +18,7 @@ export default async function CarrierLayout({ children }: { children: React.Reac
           <CarrierStatusBanner status={user?.status} />
           <LocationStatusBar />
           <main className="flex-1 p-6">{children}</main>
+          <Footer />
         </div>
       </div>
     </LocationProvider>

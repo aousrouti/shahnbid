@@ -91,6 +91,10 @@ export default function LoginPage() {
             <Link href="/register/carrier" className="text-brand-primary font-medium hover:underline">Transporteur</Link>
           </div>
         </div>
+
+        <p className="text-center text-xs text-gray-400 pt-2 border-t border-brand-border">
+          <Link href="/cgu" className="hover:text-brand-primary hover:underline">Conditions Générales d'Utilisation</Link>
+        </p>
       </div>
     </div>
   );
