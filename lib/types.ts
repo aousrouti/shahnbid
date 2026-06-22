@@ -61,6 +61,7 @@ export interface JobDetail extends JobSummary {
   hazmat: boolean;
   originAddress: string;
   destAddress: string;
+  pickupDateTo?: string;
   notes?: string;
   photoUrls: string[];
   bids: BidWithCarrier[];

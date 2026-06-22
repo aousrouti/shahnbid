@@ -9,14 +9,21 @@ import { MOROCCAN_CITIES, CARGO_TYPE_LABELS } from '@/lib/constants';
 
 const cargoTypes = Object.entries(CARGO_TYPE_LABELS) as [string, string][];
 
-export default function PostJobForm() {
+interface PostJobFormProps {
+  jobId?: string;                       // when set → edit mode (PATCH)
+  initial?: Partial<PostJobInput>;      // pre-filled values for edit
+  initialPhotos?: string[];
+}
+
+export default function PostJobForm({ jobId, initial, initialPhotos = [] }: PostJobFormProps) {
   const router = useRouter();
+  const isEdit = !!jobId;
   const [serverError, setServerError] = useState<string | null>(null);
-  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [photoUrls, setPhotoUrls] = useState<string[]>(initialPhotos);
   const [uploading, setUploading] = useState(false);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<PostJobInput>({
     resolver: zodResolver(postJobSchema),
-    defaultValues: { fragile: false, hazmat: false },
+    defaultValues: { fragile: false, hazmat: false, ...initial },
   });
 
   async function onPhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -41,18 +48,17 @@ export default function PostJobForm() {
 
   async function onSubmit(data: PostJobInput) {
     setServerError(null);
-    const res = await fetch('/api/jobs', {
-      method: 'POST',
+    const res = await fetch(isEdit ? `/api/jobs/${jobId}` : '/api/jobs', {
+      method: isEdit ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...data, photoUrls }),
+      body: JSON.stringify(isEdit ? { action: 'UPDATE', ...data, photoUrls } : { ...data, photoUrls }),
     });
     if (!res.ok) {
       const d = await res.json().catch(() => ({}));
-      setServerError(d.error ?? 'Échec de la publication. Réessayez.');
+      setServerError(d.error ?? (isEdit ? 'Échec de la modification. Réessayez.' : 'Échec de la publication. Réessayez.'));
       return;
     }
-    const { job } = await res.json();
-    router.push(`/client/jobs/${job.id}`);
+    router.push(isEdit ? `/client/jobs/${jobId}` : `/client/jobs/${(await res.json()).job.id}`);
   }
 
   const fieldClass = 'w-full border border-gray-300 rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary';
@@ -193,7 +199,7 @@ export default function PostJobForm() {
       )}
 
       <button type="submit" disabled={isSubmitting} className="w-full py-3 bg-brand-primary text-white font-bold rounded-input hover:bg-brand-mid transition-colors disabled:opacity-50 text-base">
-        {isSubmitting ? 'Publication…' : "Publier l'expédition"}
+        {isSubmitting ? 'Enregistrement…' : isEdit ? 'Enregistrer les modifications' : "Publier l'expédition"}
       </button>
     </form>
   );

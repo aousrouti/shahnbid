@@ -72,6 +72,7 @@ export async function getJobDetail(id: string): Promise<JobDetail | null> {
     hazmat: j.hazmat,
     originAddress: j.originAddress,
     destAddress: j.destAddress,
+    pickupDateTo: j.pickupDateTo ? j.pickupDateTo.toISOString() : undefined,
     notes: j.notes ?? undefined,
     photoUrls: JSON.parse(j.photoUrls || '[]') as string[],
     bids: j.bids.map(mapBid),
@@ -83,6 +84,38 @@ export async function getJobDetail(id: string): Promise<JobDetail | null> {
       phone: j.client.phone ?? '',
     },
   };
+}
+
+export type UpdateResult =
+  | { ok: true; job: JobSummary }
+  | { ok: false; reason: 'NOT_FOUND' | 'NOT_EDITABLE' };
+
+/** Edit a job's fields — only allowed while still PUBLISHED (no accepted bid). */
+export async function updateJob(jobId: string, input: PostJobPayload): Promise<UpdateResult> {
+  const j = await prisma.job.findUnique({ where: { id: jobId }, select: { status: true } });
+  if (!j) return { ok: false, reason: 'NOT_FOUND' };
+  if (j.status !== 'PUBLISHED') return { ok: false, reason: 'NOT_EDITABLE' };
+  const updated = await prisma.job.update({
+    where: { id: jobId },
+    data: {
+      cargoType: input.cargoType,
+      description: input.description,
+      weightKg: input.weightKg,
+      fragile: input.fragile,
+      hazmat: input.hazmat,
+      originCity: input.originCity,
+      originAddress: input.originAddress,
+      destCity: input.destCity,
+      destAddress: input.destAddress,
+      pickupDateFrom: new Date(input.pickupDateFrom),
+      pickupDateTo: input.pickupDateTo ? new Date(input.pickupDateTo) : null,
+      deliveryDate: new Date(input.deliveryDate),
+      notes: input.notes,
+      photoUrls: JSON.stringify(input.photoUrls ?? []),
+    },
+    include: { _count: { select: { bids: { where: { status: { not: 'WITHDRAWN' } } } } } },
+  });
+  return { ok: true, job: toSummary(updated, updated._count.bids) };
 }
 
 export type CancelResult =

@@ -80,9 +80,12 @@ export default async function ClientJobDetailPage({ params }: { params: { id: st
         </div>
       </div>
 
-      {/* Cancel (owner, while still open) */}
+      {/* Manage (owner, while still open) */}
       {job.status === 'PUBLISHED' && (
-        <div className="flex justify-end">
+        <div className="flex justify-end items-center gap-3">
+          <Link href={`/client/jobs/${params.id}/edit`} className="px-3 py-1.5 text-xs font-semibold rounded-input border border-brand-primary text-brand-primary hover:bg-brand-light transition-colors">
+            Modifier
+          </Link>
           <ActionButton
             url={`/api/jobs/${params.id}`}
             body={{ action: 'CANCEL' }}
