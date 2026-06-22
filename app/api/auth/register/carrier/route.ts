@@ -40,6 +40,7 @@ export async function POST(req: Request) {
     licenseNumber: d.licenseNumber,
     insuranceExpiry: d.insuranceExpiry,
     status: 'PENDING',
+    acceptedTermsAt: new Date().toISOString(),
   });
 
   await addAdminNotification({

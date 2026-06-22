@@ -13,7 +13,7 @@ export default function RegisterCarrierPage() {
   const [serverError, setServerError] = useState('');
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterCarrierInput>({
     resolver: zodResolver(registerCarrierSchema),
-    defaultValues: { country: DEFAULT_COUNTRY },
+    defaultValues: { country: DEFAULT_COUNTRY, acceptTerms: false },
   });
 
   async function onSubmit(data: RegisterCarrierInput) {
@@ -92,6 +92,14 @@ export default function RegisterCarrierPage() {
               <input type="date" {...register('insuranceExpiry')} className={field} />
               {errors.insuranceExpiry && <p className="text-xs text-red-600 mt-1">{errors.insuranceExpiry.message}</p>}
             </div>
+          </div>
+
+          <div>
+            <label className="flex items-start gap-2 text-sm text-gray-600">
+              <input type="checkbox" {...register('acceptTerms')} className="mt-0.5" />
+              <span>J'accepte les <Link href="/cgu#transporteur" target="_blank" className="text-brand-primary font-medium hover:underline">Conditions Générales d'Utilisation</Link>.</span>
+            </label>
+            {errors.acceptTerms && <p className="text-xs text-red-600 mt-1">{errors.acceptTerms.message}</p>}
           </div>
 
           {serverError && <p className="text-sm text-red-600">{serverError}</p>}

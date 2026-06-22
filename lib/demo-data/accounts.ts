@@ -24,6 +24,7 @@ export interface DemoAccount {
   notifyInApp?: boolean;
   notifyEmail?: boolean;
   notifyWhatsapp?: boolean;
+  acceptedTermsAt?: string;
   createdAt?: string;
 }
 
@@ -56,6 +57,7 @@ function toPublic(p: Profile): PublicAccount {
     notifyInApp: p.notifyInApp,
     notifyEmail: p.notifyEmail,
     notifyWhatsapp: p.notifyWhatsapp,
+    acceptedTermsAt: p.acceptedTermsAt ? p.acceptedTermsAt.toISOString() : undefined,
     createdAt: p.createdAt.toISOString(),
   };
 }
@@ -114,6 +116,7 @@ export async function addAccount(input: NewAccount): Promise<PublicAccount> {
       status: rest.status,
       licenseNumber: rest.licenseNumber,
       insuranceExpiry: rest.insuranceExpiry,
+      acceptedTermsAt: rest.acceptedTermsAt ? new Date(rest.acceptedTermsAt) : null,
     },
   });
   return toPublic(p);

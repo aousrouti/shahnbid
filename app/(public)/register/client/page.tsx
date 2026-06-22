@@ -14,7 +14,7 @@ export default function RegisterClientPage() {
   const [serverError, setServerError] = useState('');
   const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<RegisterClientInput>({
     resolver: zodResolver(registerClientSchema),
-    defaultValues: { clientType: 'BUSINESS', country: DEFAULT_COUNTRY },
+    defaultValues: { clientType: 'BUSINESS', country: DEFAULT_COUNTRY, acceptTerms: false },
   });
 
   const clientType = watch('clientType');
@@ -126,6 +126,14 @@ export default function RegisterClientPage() {
               <input {...register('city')} placeholder="Votre ville" className={field} />
               {errors.city && <p className="text-xs text-red-600 mt-1">{errors.city.message}</p>}
             </div>
+          </div>
+
+          <div>
+            <label className="flex items-start gap-2 text-sm text-gray-600">
+              <input type="checkbox" {...register('acceptTerms')} className="mt-0.5" />
+              <span>J'accepte les <Link href="/cgu#chargeur" target="_blank" className="text-brand-primary font-medium hover:underline">Conditions Générales d'Utilisation</Link>.</span>
+            </label>
+            {errors.acceptTerms && <p className="text-xs text-red-600 mt-1">{errors.acceptTerms.message}</p>}
           </div>
 
           {serverError && <p className="text-sm text-red-600">{serverError}</p>}

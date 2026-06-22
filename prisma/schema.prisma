@@ -52,6 +52,7 @@ model Profile {
   notifyInApp    Boolean @default(true)
   notifyEmail    Boolean @default(true)
   notifyWhatsapp Boolean @default(false)
+  acceptedTermsAt DateTime?   // when the user accepted the CGU at registration
   createdAt    DateTime @default(now())
 
   jobs          Job[]                 @relation("ClientJobs")

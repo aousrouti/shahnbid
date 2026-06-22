@@ -13,6 +13,7 @@ export const registerClientSchema = z.object({
   companyName: z.string().optional(),
   ice:         z.string().optional(),
   address:     z.string().optional(),
+  acceptTerms: z.boolean().refine((v) => v === true, 'Vous devez accepter les CGU'),
 }).superRefine((d, ctx) => {
   if (d.clientType === 'BUSINESS') {
     if (!d.companyName || d.companyName.trim().length < 2)
@@ -37,6 +38,7 @@ export const registerCarrierSchema = z.object({
     (d) => new Date(d) > new Date(),
     "L'assurance doit être en cours de validité",
   ),
+  acceptTerms:     z.boolean().refine((v) => v === true, 'Vous devez accepter les CGU'),
 });
 
 export const postJobSchema = z.object({

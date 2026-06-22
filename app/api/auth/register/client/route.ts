@@ -39,6 +39,7 @@ export async function POST(req: Request) {
     address: d.address,
     country: d.country,
     city: d.city,
+    acceptedTermsAt: new Date().toISOString(),
   });
 
   await addAdminNotification({
